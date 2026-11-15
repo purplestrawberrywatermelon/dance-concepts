@@ -19,8 +19,8 @@ window.DP_DATA = {
   },
 
   dances: [
-    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: 'ref/dance1/input_video.mp4', example: 'ref/dance1/output1.mp4' },
-    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: 'ref/dance2/input_video.mp4', example: 'ref/dance2/output1.mp4' },
+    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: 'ref/dance1/input_video.mp4', example: 'ref/dance1/output3.mp4' },
+    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: 'ref/dance2/input_video.mp4', example: 'ref/dance2/output3.mp4' },
     { id: 'd3', no: '03', title: 'Sky Bounce',  short: 'Bounce', mood: 'Bright and playful', bpm: 116, len: '0:16', src: '', example: '' }
   ],
 
@@ -37,7 +37,7 @@ window.DP_DATA = {
 
   /* The participant shown on the personal result screen when nothing was
      chosen in the setup screen first. */
-  participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: 'ref/dance2/output1.mp4' },
+  participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: 'ref/dance2/output3.mp4' },
 
   /* Newest first. 22 entries = 2 gallery pages (16 + 6). */
   gallery: [
