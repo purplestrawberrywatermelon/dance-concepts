@@ -22,20 +22,20 @@ window.DP_DATA = {
   },
 
   dances: [
-    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: '', example: '' },
-    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: '', example: '' },
+    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: 'ref/select_vid/dance1/input_video.mp4', example: 'ref/result_example_vid/dance1/output1.mp4' },
+    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: 'ref/select_vid/dance2/input_video.mp4', example: 'ref/result_example_vid/dance2/output1.mp4' },
     { id: 'd3', no: '03', title: 'Sky Bounce',  short: 'Bounce', mood: 'Bright and playful', bpm: 116, len: '0:16', src: '', example: '' }
   ],
 
   hairs: [
-    { id: 'h1', no: '01', title: 'Soft Wave', short: 'Wave', src: '' },
-    { id: 'h2', no: '02', title: 'Sleek Bob', short: 'Bob',  src: '' },
+    { id: 'h1', no: '01', title: 'Soft Wave', short: 'Wave', src: 'ref/select_hair/dance1.png' },
+    { id: 'h2', no: '02', title: 'Sleek Bob', short: 'Bob',  src: 'ref/select_hair/dance2.png' },
     { id: 'h3', no: '03', title: 'Wind Cut',  short: 'Wind', src: '' }
   ],
 
   outfits: [
-    { id: 'o1', no: '01', title: 'Stage Black',  short: 'Black', src: '' },
-    { id: 'o2', no: '02', title: 'Street Denim', short: 'Denim', src: '' }
+    { id: 'o1', no: '01', title: 'Stage Black',  short: 'Black', src: 'ref/select_clothes/dance1.png' },
+    { id: 'o2', no: '02', title: 'Street Denim', short: 'Denim', src: 'ref/select_clothes/dance2.png' }
   ],
 
   /* The participant shown on the personal result screen when nothing was
