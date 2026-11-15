@@ -8,10 +8,7 @@
   path in `src` and the same slot becomes a <video> / <img> - no concept code
   has to change.
 
-  Files that exist in this project and can be wired in later:
-    Junho result   ../virtual_idol_data/showcase_samples/m02/ai_styled/dance_video/reference_dance_ai_01.mp4
-    Dance sources  ../virtual_idol_data/showcase_samples/{f01,m02}/original/dance_video/setting12.mp4
-    Hair / outfit  ../become-virtual-idol.github.io/assets/hair_{1,2,3}.png, outfit_{1,2}.jpg
+  Media for each dance lives together under ref/dance1 and ref/dance2.
 */
 window.DP_DATA = {
   event: {
@@ -22,25 +19,25 @@ window.DP_DATA = {
   },
 
   dances: [
-    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: 'ref/select_vid/dance1/input_video.mp4', example: 'ref/result_example_vid/dance1/output1.mp4' },
-    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: 'ref/select_vid/dance2/input_video.mp4', example: 'ref/result_example_vid/dance2/output1.mp4' },
+    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: 'ref/dance1/input_video.mp4', example: 'ref/dance1/output1.mp4' },
+    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: 'ref/dance2/input_video.mp4', example: 'ref/dance2/output1.mp4' },
     { id: 'd3', no: '03', title: 'Sky Bounce',  short: 'Bounce', mood: 'Bright and playful', bpm: 116, len: '0:16', src: '', example: '' }
   ],
 
   hairs: [
-    { id: 'h1', no: '01', title: 'Soft Wave', short: 'Wave', src: 'ref/select_hair/dance1.png' },
-    { id: 'h2', no: '02', title: 'Sleek Bob', short: 'Bob',  src: 'ref/select_hair/dance2.png' },
+    { id: 'h1', no: '01', title: 'Soft Wave', short: 'Wave', src: 'ref/dance1/hair.png' },
+    { id: 'h2', no: '02', title: 'Sleek Bob', short: 'Bob',  src: 'ref/dance2/hair.png' },
     { id: 'h3', no: '03', title: 'Wind Cut',  short: 'Wind', src: '' }
   ],
 
   outfits: [
-    { id: 'o1', no: '01', title: 'Stage Black',  short: 'Black', src: 'ref/select_clothes/dance1.png' },
-    { id: 'o2', no: '02', title: 'Street Denim', short: 'Denim', src: 'ref/select_clothes/dance2.png' }
+    { id: 'o1', no: '01', title: 'Stage Black',  short: 'Black', src: 'ref/dance1/clothes.png' },
+    { id: 'o2', no: '02', title: 'Street Denim', short: 'Denim', src: 'ref/dance2/clothes.png' }
   ],
 
   /* The participant shown on the personal result screen when nothing was
      chosen in the setup screen first. */
-  participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: '' },
+  participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: 'ref/dance2/output1.mp4' },
 
   /* Newest first. 22 entries = 2 gallery pages (16 + 6). */
   gallery: [
