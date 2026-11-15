@@ -1,0 +1,210 @@
+/* Base for every concept screen: a fixed 1920x1080 stage scaled to the viewport. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--page, #000);
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  margin: -540px 0 0 -960px;
+  transform: scale(var(--fit, 1));
+  transform-origin: 50% 50%;
+  overflow: hidden;
+  background: var(--bg, #000);
+  color: var(--fg, #fff);
+  visibility: hidden;
+}
+
+html.is-ready #stage {
+  visibility: visible;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus, currentColor);
+  outline-offset: 4px;
+}
+
+/* ---------- media slot ----------
+   Empty placeholder for a video or image. Concepts size it and may set
+   --slot-bg / --slot-fg. Filling `src` in shared/data.js swaps in real media. */
+.slot {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  container-type: inline-size;
+  background: color-mix(in srgb, var(--slot-bg, #1b1b1f) calc(100% - var(--tone, 0) * 4%), var(--slot-fg, #8a8a94));
+  color: var(--slot-fg, #8a8a94);
+}
+
+.slot > video,
+.slot > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.slot--video:not(.has-media)::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(16px, 11cqw, 54px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: currentColor;
+  opacity: .42;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='22.5' fill='none' stroke='black' stroke-width='1.5'/%3E%3Cpath d='M19.5 15.5v17l14-8.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='22.5' fill='none' stroke='black' stroke-width='1.5'/%3E%3Cpath d='M19.5 15.5v17l14-8.5z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.slot__tag {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: 500 12px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-align: left;
+  pointer-events: none;
+}
+
+.slot__tag b {
+  font-weight: 600;
+  opacity: .9;
+}
+
+.slot__tag i {
+  font-style: normal;
+  opacity: .62;
+}
+
+.slot.has-media .slot__tag {
+  display: none;
+}
+
+@container (max-width: 170px) {
+  .slot__tag {
+    left: 8px;
+    right: 8px;
+    bottom: 7px;
+    font-size: 10px;
+    letter-spacing: .03em;
+  }
+
+  .slot__tag i {
+    display: none;
+  }
+}
+
+@container (max-width: 84px) {
+  .slot__tag {
+    display: none;
+  }
+}
+
+/* ---------- QR area ---------- */
+.qr {
+  display: block;
+  aspect-ratio: 1;
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.qr__bg {
+  fill: var(--qr-bg, #fff);
+}
+
+.qr__fg {
+  fill: var(--qr-fg, #000);
+}
+
+/* ---------- frozen mode for thumbnails ---------- */
+html[data-static] *,
+html[data-static] *::before,
+html[data-static] *::after {
+  animation-duration: .001s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001s !important;
+  }
+}
