@@ -39,7 +39,7 @@ window.DP_DATA = {
      chosen in the setup screen first. */
   participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: 'ref/dance2/output3.mp4' },
 
-  /* Newest first. 22 entries = 2 gallery pages (16 + 6). */
+  /* Newest first. 22 entries = 2 gallery pages (16 + 6; 12 + 10 for concepts that use perPage: 12). */
   gallery: [
     { entry: 142, name: 'Junho',   dance: 'd2', hair: 'h1', outfit: 'o1', ago: 'just now', src: '' },
     { entry: 141, name: 'Maya',    dance: 'd1', hair: 'h2', outfit: 'o2', ago: '2 min',  src: '' },
