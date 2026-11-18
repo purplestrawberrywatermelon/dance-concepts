@@ -1,16 +1,20 @@
-/* 03 Editorial - big video, very little copy, names set as an index. */
+/* 03 Editorial - big video, very little copy. Main screen carries BPM / length like 05;
+   the gallery is the 05-style full-bleed video wall, 4 x 3 = 12 per page. */
 DP.register({
   id: '03',
   fonts: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap',
   genMs: 1500,
   revealMs: 3600,
   turn: { out: 520, 'in': 950 },
+  perPage: 12,
+  cols: 4,
 
   setup: function (DP) {
     var d = DP.data;
     return '<div class="strips">' + DP.each(d.dances, function (x) {
         return '<button class="strip" data-act="dance" data-id="' + x.id + '">' + DP.danceSlot(x) +
-          '<span class="strip__cap"><i>' + x.no + '</i><b>' + x.title + '</b><em>' + x.mood + '</em></span></button>';
+          '<span class="strip__cap"><i>' + x.no + ' / ' + DP.pad(d.dances.length) + '</i><b>' + x.title + '</b>' +
+          '<em class="strip__meta"><span>' + x.bpm + ' BPM</span><span>' + x.len + '</span><span>' + x.mood + '</span></em></span></button>';
       }) +
       '<section class="side"><div class="side__in">' +
         '<button class="link back" data-act="back">&larr; All dances</button>' +
@@ -52,21 +56,20 @@ DP.register({
   },
 
   gallery: function (DP) {
-    return '<header class="ghead"><p class="eyebrow"><span class="brand-dot"></span>The debut wall</p>' +
-      '<div class="pager"><button class="link" data-act="page" data-dir="-1">&larr;</button>' +
+    return '<div class="wall" data-grid></div>' +
+      '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
+      '<div class="wall__pager"><button data-act="page" data-dir="-1" aria-label="Previous page">&larr;</button>' +
       '<b>' + DP.t('page2') + ' / ' + DP.t('pages2') + '</b>' +
-      '<button class="link" data-act="page" data-dir="1">&rarr;</button></div></header>' +
-      '<div class="wall" data-grid></div>';
+      '<button data-act="page" data-dir="1" aria-label="Next page">&rarr;</button></div>';
   },
 
-  /* Each tile is an index line (left) plus a plate (right). The tile itself is
-     display: contents so both sit in one shared grid. */
+  /* Full-bleed video tile; the name and dance sit in a lower-third. */
   tile: function (e, i, DP) {
-    return '<span class="line"><i>' + e.no + '</i><b>' + DP.esc(e.name) + '</b><em>' + e.dance.title + '</em></span>' +
-      '<span class="plate">' + DP.entrySlot(e) + '<i>' + e.no + '</i></span>';
+    return DP.entrySlot(e) +
+      '<span class="g-lt">' + (e.latest ? '<i>New</i>' : '') + '<b>' + DP.esc(e.name) + '</b><em>' + e.dance.title + '</em></span>';
   },
 
   empty: function () {
-    return '<span class="line line--none"></span><span class="plate plate--none"></span>';
+    return '';
   }
 });
