@@ -26,8 +26,7 @@ window.DP_DATA = {
 
   hairs: [
     { id: 'h1', no: '01', title: 'Soft Wave', short: 'Wave', src: 'ref/dance1/hair.png' },
-    { id: 'h2', no: '02', title: 'Sleek Bob', short: 'Bob',  src: 'ref/dance2/hair.png' },
-    { id: 'h3', no: '03', title: 'Wind Cut',  short: 'Wind', src: '' }
+    { id: 'h2', no: '02', title: 'Sleek Bob', short: 'Bob',  src: 'ref/dance2/hair.png' }
   ],
 
   outfits: [
@@ -39,28 +38,28 @@ window.DP_DATA = {
      chosen in the setup screen first. */
   participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: 'ref/dance2/output3.mp4' },
 
-  /* Newest first. 22 entries = 2 gallery pages (16 + 6). */
+  /* Newest first. 22 entries = 2 gallery pages (16 + 6; 12 + 10 for concepts that use perPage: 12). */
   gallery: [
     { entry: 142, name: 'Junho',   dance: 'd2', hair: 'h1', outfit: 'o1', ago: 'just now', src: '' },
     { entry: 141, name: 'Maya',    dance: 'd1', hair: 'h2', outfit: 'o2', ago: '2 min',  src: '' },
-    { entry: 140, name: 'Arjun',   dance: 'd3', hair: 'h3', outfit: 'o1', ago: '4 min',  src: '' },
+    { entry: 140, name: 'Arjun',   dance: 'd3', hair: 'h1', outfit: 'o1', ago: '4 min',  src: '' },
     { entry: 139, name: 'Sofia',   dance: 'd2', hair: 'h1', outfit: 'o2', ago: '7 min',  src: '' },
-    { entry: 138, name: 'Kenji',   dance: 'd1', hair: 'h3', outfit: 'o1', ago: '9 min',  src: '' },
+    { entry: 138, name: 'Kenji',   dance: 'd1', hair: 'h2', outfit: 'o1', ago: '9 min',  src: '' },
     { entry: 137, name: 'Amara',   dance: 'd3', hair: 'h2', outfit: 'o2', ago: '12 min', src: '' },
     { entry: 136, name: 'Lucas',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '15 min', src: '' },
     { entry: 135, name: 'Yuna',    dance: 'd2', hair: 'h2', outfit: 'o1', ago: '18 min', src: '' },
     { entry: 134, name: 'Omar',    dance: 'd3', hair: 'h1', outfit: 'o2', ago: '21 min', src: '' },
-    { entry: 133, name: 'Elena',   dance: 'd1', hair: 'h3', outfit: 'o2', ago: '24 min', src: '' },
-    { entry: 132, name: 'Wei',     dance: 'd2', hair: 'h3', outfit: 'o1', ago: '28 min', src: '' },
+    { entry: 133, name: 'Elena',   dance: 'd1', hair: 'h1', outfit: 'o2', ago: '24 min', src: '' },
+    { entry: 132, name: 'Wei',     dance: 'd2', hair: 'h2', outfit: 'o1', ago: '28 min', src: '' },
     { entry: 131, name: 'Priya',   dance: 'd3', hair: 'h2', outfit: 'o1', ago: '31 min', src: '' },
     { entry: 130, name: 'Noah',    dance: 'd2', hair: 'h1', outfit: 'o2', ago: '35 min', src: '' },
     { entry: 129, name: 'Chaehee', dance: 'd1', hair: 'h2', outfit: 'o1', ago: '38 min', src: '' },
-    { entry: 128, name: 'Mateo',   dance: 'd3', hair: 'h3', outfit: 'o2', ago: '42 min', src: '' },
+    { entry: 128, name: 'Mateo',   dance: 'd3', hair: 'h1', outfit: 'o2', ago: '42 min', src: '' },
     { entry: 127, name: 'Ingrid',  dance: 'd1', hair: 'h1', outfit: 'o2', ago: '45 min', src: '' },
     { entry: 126, name: 'Tariq',   dance: 'd2', hair: 'h2', outfit: 'o2', ago: '49 min', src: '' },
     { entry: 125, name: 'Hana',    dance: 'd3', hair: 'h1', outfit: 'o1', ago: '52 min', src: '' },
-    { entry: 124, name: 'Diego',   dance: 'd1', hair: 'h3', outfit: 'o1', ago: '56 min', src: '' },
-    { entry: 123, name: 'Zoe',     dance: 'd2', hair: 'h3', outfit: 'o2', ago: '1 hr',   src: '' },
+    { entry: 124, name: 'Diego',   dance: 'd1', hair: 'h2', outfit: 'o1', ago: '56 min', src: '' },
+    { entry: 123, name: 'Zoe',     dance: 'd2', hair: 'h1', outfit: 'o2', ago: '1 hr',   src: '' },
     { entry: 122, name: 'Jinwoo',  dance: 'd3', hair: 'h2', outfit: 'o1', ago: '1 hr',   src: '' },
     { entry: 121, name: 'Leila',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '1 hr',   src: '' }
   ],
