@@ -8,6 +8,7 @@
       result(DP)  -> html      personal result
       gallery(DP) -> html      must contain one [data-grid] element
       tile(entry, i, DP) -> html   inner markup of one gallery tile
+      perPage, cols             optional, gallery tiles per page (default 16) and columns (default 4)
       empty(i)    -> html      optional, inner markup of an unused tile
       init(root, DP)           optional hook after render
     })
@@ -36,7 +37,8 @@
   var root = document.getElementById('stage');
   var html = document.documentElement;
   var embedded = window.parent !== window;
-  var PER_PAGE = 16;
+  var PER_PAGE = 16;   /* overridden per concept: perPage */
+  var COLS = 4;        /* overridden per concept: cols */
 
   var P = {
     c: (q.get('c') || '01').replace(/[^0-9]/g, '').padStart(2, '0'),
@@ -330,7 +332,7 @@
       } else if (concept.empty) {
         inner = concept.empty(i, DP);
       }
-      out += '<div class="' + cls + '" style="--i:' + i + ';--r:' + Math.floor(i / 4) + ';--c:' + (i % 4) + '">' + inner + '</div>';
+      out += '<div class="' + cls + '" style="--i:' + i + ';--r:' + Math.floor(i / COLS) + ';--c:' + (i % COLS) + '">' + inner + '</div>';
     }
     return out;
   }
@@ -478,6 +480,8 @@
 
   DP.register = function (def) {
     concept = def;
+    PER_PAGE = def.perPage || 16;
+    COLS = def.cols || 4;
     initState();
     html.setAttribute('data-concept', P.c);
     var pending = 1;
