@@ -9,9 +9,21 @@ DP.register({
   perPage: 12,
   cols: 4,
 
+  nav: function (DP) {
+    var here = DP.params.s;
+    var item = function (id, label) {
+      if (id === here) return '<b class="nav__here" aria-current="page">' + label + '</b>';
+      return '<button type="button" data-act="goto" data-screen="' + id + '">' + label + '</button>';
+    };
+    return '<nav class="nav">' +
+      '<button type="button" class="nav__back" data-nav="back" aria-label="Back">&larr;</button>' +
+      item('setup', 'Setup') + item('result', 'Result') + item('gallery', 'Gallery') +
+      '</nav>';
+  },
+
   setup: function (DP) {
     var d = DP.data;
-    return '<div class="strips">' + DP.each(d.dances, function (x) {
+    return this.nav(DP) + '<div class="strips">' + DP.each(d.dances, function (x) {
         return '<button class="strip" data-act="dance" data-id="' + x.id + '">' + DP.danceSlot(x) +
           '<span class="strip__cap"><i>' + x.no + ' / ' + DP.pad(d.dances.length) + '</i><b>' + x.title + '</b>' +
           '<em class="strip__meta"><span>' + x.bpm + ' BPM</span><span>' + x.len + '</span><span>' + x.mood + '</span></em></span></button>';
@@ -77,6 +89,13 @@ DP.register({
 
   init: function (root, DP) {
     var self = this;
+    if (!this.navBound) {
+      this.navBound = true;
+      root.addEventListener('click', function (ev) {
+        var back = ev.target.closest && ev.target.closest('[data-nav="back"]');
+        if (back) history.back();
+      });
+    }
     if (DP.params.s === 'setup') {
       root.addEventListener('pointerdown', function (ev) {
         self.audioOn = true;
@@ -98,8 +117,9 @@ DP.register({
     }
     if (DP.params.s !== 'gallery') return;
     if (!this.mine) this.mine = this.readMine();
-    this.counts = this.counts || {};
+    if (!this.counts) this.counts = this.readCounts();
     this.applyLayout(root);
+    this.paintHearts(root);
     if (!this.galleryBound) {
       this.galleryBound = true;
       this.bindGallery(root);
@@ -139,7 +159,7 @@ DP.register({
   },
 
   result: function (DP) {
-    return '<div class="frame">' + DP.resultSlot() + '</div>' +
+    return this.nav(DP) + '<div class="frame">' + DP.resultSlot() + '</div>' +
       '<p class="gen">One moment</p>' +
       '<section class="col">' +
         '<h1 class="name rv" style="--d:0">' + DP.t('name') + '</h1>' +
@@ -157,7 +177,7 @@ DP.register({
   },
 
   gallery: function (DP) {
-    return '<div class="wall" data-grid></div>' +
+    return this.nav(DP) + '<div class="wall" data-grid></div>' +
       '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
       '<div class="wall__pager">' +
         '<span class="wall__layouts">' +
@@ -232,10 +252,10 @@ DP.register({
   },
 
   /* ---------- votes ----------
-     Counts live in Firestore votes/{entry}. This browser remembers its own
-     hearts in localStorage so a second tap removes the vote.
-     Paste the Firebase web config before counts will save. Rules to put in
-     the Firebase console are in shared/firebase-config.js. */
+     Each tap adds one vote. A second tap does not remove it, so a host can
+     click once for every person who points at a video.
+     Without Firebase the totals stay in this browser. With a config in
+     shared/firebase-config.js the same tap also adds 1 in Firestore. */
   readMine: function () {
     try {
       var v = JSON.parse(localStorage.getItem('dp-votes') || '{}');
@@ -247,17 +267,28 @@ DP.register({
     try { localStorage.setItem('dp-votes', JSON.stringify(this.mine || {})); } catch (e) { /* ignore */ }
   },
 
+  readCounts: function () {
+    try {
+      var v = JSON.parse(localStorage.getItem('dp-vote-counts') || '{}');
+      return v && typeof v === 'object' ? v : {};
+    } catch (e) { return {}; }
+  },
+
+  writeCounts: function () {
+    try { localStorage.setItem('dp-vote-counts', JSON.stringify(this.counts || {})); } catch (e) { /* ignore */ }
+  },
+
   paintHearts: function (root) {
     var self = this;
-    var mine = this.mine || {};
     root.querySelectorAll('.heart').forEach(function (btn) {
       var id = btn.dataset.entry;
-      var on = !!mine[id];
+      var n = self.counts && self.counts[id];
+      var count = Number(n) || 0;
+      var on = count > 0;
       btn.classList.toggle('is-on', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      var n = self.counts && self.counts[id];
       var label = btn.querySelector('b');
-      if (label && n != null) label.textContent = String(n);
+      if (label && n != null) label.textContent = String(count);
     });
   },
 
@@ -281,30 +312,29 @@ DP.register({
 
   vote: function (root, btn) {
     var self = this;
-    if (!this.db || btn.dataset.busy) return;
-    if (!window.firebase || !firebase.auth().currentUser) return;
+    if (btn.dataset.busy) return;
     var id = btn.dataset.entry;
-    var had = !!this.mine[id];
-    if (had) delete this.mine[id]; else this.mine[id] = 1;
-    this.writeMine();
+    if (!this.counts) this.counts = this.readCounts();
+    var prev = Number(this.counts[id]) || 0;
+    this.counts[id] = prev + 1;
+    this.writeCounts();
     this.paintHearts(root);
+    var remote = this.db && window.firebase && firebase.auth && firebase.auth().currentUser;
+    if (!remote) return;
     btn.dataset.busy = '1';
-    var delta = had ? -1 : 1;
     var ref = this.db.collection('votes').doc(id);
     this.db.runTransaction(function (tx) {
       return tx.get(ref).then(function (snap) {
         if (!snap.exists) {
-          if (delta > 0) tx.set(ref, { count: 1 });
+          tx.set(ref, { count: 1 });
           return;
         }
         var count = Number(snap.data().count) || 0;
-        var next = count + delta;
-        if (next < 0) return;
-        tx.update(ref, { count: next });
+        tx.update(ref, { count: count + 1 });
       });
     }).catch(function () {
-      if (had) self.mine[id] = 1; else delete self.mine[id];
-      self.writeMine();
+      self.counts[id] = Math.max(0, (Number(self.counts[id]) || 1) - 1);
+      self.writeCounts();
       self.paintHearts(root);
     }).then(function () { delete btn.dataset.busy; });
   },

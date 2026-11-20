@@ -31,6 +31,12 @@
 (function () {
   'use strict';
 
+  /* Old review links looked like index.html#/c/05/setup. The hash is not a
+     route anymore, so drop it and leave the query string (?s=gallery) intact. */
+  if (location.hash) {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
   var D = window.DP_DATA;
   var q = new URLSearchParams(location.search);
   var DP = (window.DP = { data: D });
