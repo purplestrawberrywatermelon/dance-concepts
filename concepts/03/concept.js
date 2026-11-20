@@ -9,6 +9,10 @@ DP.register({
   perPage: 12,
   cols: 4,
 
+  heartSvg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 20.3s-6.4-4.1-8.9-7.8C1.3 9.7 1.8 6.5 4.3 5.1c2.1-1.2 4.4-.6 6.5 1.8l1.2 1.4 1.2-1.4c2.1-2.4 4.4-3 6.5-1.8 2.5 1.4 3 4.6 1.1 7.4-2.5 3.7-8.7 7.8-8.7 7.8z"/></svg>',
+
+  voteIdleMs: 60000,
+
   nav: function (DP) {
     var here = DP.params.s;
     var item = function (id, label) {
@@ -23,7 +27,7 @@ DP.register({
 
   setup: function (DP) {
     var d = DP.data;
-    return this.nav(DP) + '<div class="strips">' + DP.each(d.dances, function (x) {
+    return this.nav(DP) + '<div class="body">' + '<div class="strips">' + DP.each(d.dances, function (x) {
         return '<button class="strip" data-act="dance" data-id="' + x.id + '">' + DP.danceSlot(x) +
           '<span class="strip__cap"><i>' + x.no + ' / ' + DP.pad(d.dances.length) + '</i><b>' + x.title + '</b>' +
           '<em class="strip__meta"><span>' + x.bpm + ' BPM</span><span>' + x.len + '</span><span>' + x.mood + '</span></em></span></button>';
@@ -45,7 +49,7 @@ DP.register({
         '<div class="grp grp-name"><p class="lbl">Your name</p>' +
           '<input class="namein" data-bind="name" maxlength="14" placeholder="Your name" autocomplete="off" spellcheck="false" aria-label="Your name">' +
           '<button class="roll" data-act="create">Create &rarr;</button></div>' +
-      '</section>';
+      '</section></div>';
   },
 
   /* ---------- sound ----------
@@ -58,7 +62,6 @@ DP.register({
   inStyle: false,
   hotTile: null,
   counts: null,
-  mine: null,
 
   play: function (v, withSound) {
     if (!v) return;
@@ -115,22 +118,34 @@ DP.register({
       });
       return;
     }
-    if (DP.params.s !== 'gallery') return;
-    if (!this.mine) this.mine = this.readMine();
     if (!this.counts) this.counts = this.readCounts();
+    if (DP.params.s === 'result') {
+      this.paintHearts(root);
+      this.bootFirebase(root);
+      return;
+    }
+    if (DP.params.s !== 'gallery') return;
+    this.endVote(root, true);
     this.applyLayout(root);
     this.paintHearts(root);
+    this.paintVote(root);
     if (!this.galleryBound) {
       this.galleryBound = true;
-      this.bindGallery(root);
+      this.bindGallery(root, DP);
     }
     this.bootFirebase(root);
   },
 
   update: function (root, DP) {
+    if (DP.params.s === 'result') {
+      this.paintHearts(root);
+      if (this.db) this.watchVotes(root);
+      return;
+    }
     if (DP.params.s === 'gallery') {
       this.applyLayout(root);
       this.paintHearts(root);
+      this.paintVote(root);
       if (this.db) this.watchVotes(root);
       if (!this.hotTile || !root.contains(this.hotTile)) {
         this.hotTile = null;
@@ -159,7 +174,7 @@ DP.register({
   },
 
   result: function (DP) {
-    return this.nav(DP) + '<div class="frame">' + DP.resultSlot() + '</div>' +
+    return this.nav(DP) + '<div class="body"><div class="frame">' + DP.resultSlot() + '</div>' +
       '<p class="gen">One moment</p>' +
       '<section class="col">' +
         '<h1 class="name rv" style="--d:0">' + DP.t('name') + '</h1>' +
@@ -168,16 +183,18 @@ DP.register({
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
           '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
         '</dl>' +
-        '<div class="links rv" style="--d:2">' +
+        '<p class="likes rv" style="--d:2"><span class="heart heart--static" data-entry="' + DP.sel().entry + '">' +
+          this.heartSvg + '<b>0</b></span><small>likes</small></p>' +
+        '<div class="links rv" style="--d:3">' +
           '<button class="link" data-act="goto" data-screen="gallery">Gallery &rarr;</button>' +
           '<button class="link" data-act="restart">Start over</button>' +
         '</div>' +
-        '<div class="keep rv" style="--d:3">' + DP.qr() + '<p>Scan to keep it.<small>' + DP.t('url') + '</small></p></div>' +
-      '</section>';
+        '<div class="keep rv" style="--d:4">' + DP.qr() + '<p>Scan to keep it.<small>' + DP.t('url') + '</small></p></div>' +
+      '</section></div>';
   },
 
   gallery: function (DP) {
-    return this.nav(DP) + '<div class="wall" data-grid></div>' +
+    return this.nav(DP) + '<div class="body"><div class="wall" data-grid></div>' +
       '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
       '<div class="wall__pager">' +
         '<span class="wall__layouts">' +
@@ -186,16 +203,23 @@ DP.register({
         '</span>' +
         '<button data-act="page" data-dir="-1" aria-label="Previous page">&larr;</button>' +
         '<b>' + DP.t('page2') + ' / ' + DP.t('pages2') + '</b>' +
-        '<button data-act="page" data-dir="1" aria-label="Next page">&rarr;</button></div>';
+        '<button data-act="page" data-dir="1" aria-label="Next page">&rarr;</button></div>' +
+      '<div class="vote">' +
+        '<button type="button" class="vote__start" data-vote-act="start">' + this.heartSvg + 'Vote for your favorite idol</button>' +
+        '<div class="vote__bar" role="group" aria-label="Voting">' +
+          '<p class="vote__hint">Tap the videos you like<small><b class="vote__n">0</b> selected</small></p>' +
+          '<button type="button" class="vote__cancel" data-vote-act="cancel">Cancel</button>' +
+          '<button type="button" class="vote__ok" data-vote-act="confirm" disabled>Confirm</button>' +
+        '</div>' +
+        '<p class="vote__thanks" role="status">Thanks! Your votes are in.</p>' +
+      '</div></div>';
   },
 
   /* Full-bleed video tile; the name sits in a lower-third, the heart at the bottom right. */
   tile: function (e, i, DP) {
     return DP.entrySlot(e) +
       '<span class="g-lt">' + (e.latest ? '<i>New</i>' : '') + '<b>' + DP.esc(e.name) + '</b><em>' + e.dance.title + '</em></span>' +
-      '<button type="button" class="heart" data-entry="' + e.entry + '" aria-label="Like ' + DP.esc(e.name) + '" aria-pressed="false">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 20.3s-6.4-4.1-8.9-7.8C1.3 9.7 1.8 6.5 4.3 5.1c2.1-1.2 4.4-.6 6.5 1.8l1.2 1.4 1.2-1.4c2.1-2.4 4.4-3 6.5-1.8 2.5 1.4 3 4.6 1.1 7.4-2.5 3.7-8.7 7.8-8.7 7.8z"/></svg>' +
-        '<b>0</b></button>';
+      '<span class="pick" aria-hidden="true"></span>';
   },
 
   empty: function () {
@@ -216,7 +240,7 @@ DP.register({
     });
   },
 
-  bindGallery: function (root) {
+  bindGallery: function (root, DP) {
     var self = this;
     root.addEventListener('pointerdown', function () {
       self.audioOn = true;
@@ -246,27 +270,23 @@ DP.register({
         self.applyLayout(root);
         return;
       }
-      var heart = ev.target.closest && ev.target.closest('.heart');
-      if (heart) self.vote(root, heart);
+      var vb = ev.target.closest && ev.target.closest('[data-vote-act]');
+      if (vb) { self.voteAction(root, vb.dataset.voteAct); return; }
+      var tile = ev.target.closest && ev.target.closest('.tile[data-entry]');
+      if (!tile) return;
+      if (self.voting) self.togglePick(root, tile.dataset.entry);
+      else DP.openEntry(tile.dataset.entry);
     });
+    root.addEventListener('pointerdown', function () { if (self.voting) self.armIdle(root); }, true);
   },
 
   /* ---------- votes ----------
-     Each tap adds one vote. A second tap does not remove it, so a host can
-     click once for every person who points at a video.
-     Without Firebase the totals stay in this browser. With a config in
-     shared/firebase-config.js the same tap also adds 1 in Firestore. */
-  readMine: function () {
-    try {
-      var v = JSON.parse(localStorage.getItem('dp-votes') || '{}');
-      return v && typeof v === 'object' ? v : {};
-    } catch (e) { return {}; }
-  },
-
-  writeMine: function () {
-    try { localStorage.setItem('dp-votes', JSON.stringify(this.mine || {})); } catch (e) { /* ignore */ }
-  },
-
+     Browse mode: a tap on a video opens that person's result page.
+     Vote mode ("Vote for your favorite idol"): taps pick or un-pick videos,
+     and Confirm adds one vote to each picked video. The screen is shared, so
+     nothing is remembered per person: a video is picked once per Confirm. Without Firebase the totals stay in this
+     browser. With a config in shared/firebase-config.js the same Confirm also
+     adds 1 per video in Firestore. */
   readCounts: function () {
     try {
       var v = JSON.parse(localStorage.getItem('dp-vote-counts') || '{}');
@@ -310,33 +330,92 @@ DP.register({
     });
   },
 
-  vote: function (root, btn) {
+  voting: false,
+  picks: {},
+  idleTimer: null,
+  thanksTimer: null,
+
+  voteAction: function (root, what) {
+    if (what === 'start') {
+      this.voting = true;
+      this.picks = {};
+      this.armIdle(root);
+      this.paintVote(root);
+    } else if (what === 'cancel') {
+      this.endVote(root);
+    } else if (what === 'confirm') {
+      this.confirmVotes(root);
+    }
+  },
+
+  endVote: function (root, quiet) {
+    this.voting = false;
+    this.picks = {};
+    clearTimeout(this.idleTimer);
+    if (!quiet) this.paintVote(root);
+    else root.dataset.vote = 'off';
+  },
+
+  /* A forgotten vote screen falls back to browsing after a minute. */
+  armIdle: function (root) {
     var self = this;
-    if (btn.dataset.busy) return;
-    var id = btn.dataset.entry;
+    clearTimeout(this.idleTimer);
+    this.idleTimer = setTimeout(function () { self.endVote(root); }, this.voteIdleMs);
+  },
+
+  togglePick: function (root, id) {
+    if (this.picks[id]) delete this.picks[id];
+    else this.picks[id] = true;
+    this.paintVote(root);
+  },
+
+  paintVote: function (root) {
+    var self = this;
+    var n = Object.keys(this.picks).length;
+    root.dataset.vote = this.voting ? 'on' : 'off';
+    root.querySelectorAll('.tile[data-entry]').forEach(function (t) {
+      var id = t.dataset.entry;
+      t.classList.toggle('is-picked', !!self.picks[id]);
+    });
+    var out = root.querySelector('.vote__n');
+    if (out) out.textContent = String(n);
+    var ok = root.querySelector('.vote__ok');
+    if (ok) ok.disabled = n === 0;
+  },
+
+  confirmVotes: function (root) {
+    var self = this;
+    var ids = Object.keys(this.picks);
+    if (!ids.length) return;
     if (!this.counts) this.counts = this.readCounts();
-    var prev = Number(this.counts[id]) || 0;
-    this.counts[id] = prev + 1;
+    ids.forEach(function (id) {
+      self.counts[id] = (Number(self.counts[id]) || 0) + 1;
+    });
     this.writeCounts();
-    this.paintHearts(root);
+    this.pushRemote(ids);
+    this.endVote(root);
+    root.dataset.thanks = '1';
+    clearTimeout(this.thanksTimer);
+    this.thanksTimer = setTimeout(function () { delete root.dataset.thanks; }, 3200);
+  },
+
+  /* One transaction per video; a failed one is taken back locally. */
+  pushRemote: function (ids) {
+    var self = this;
     var remote = this.db && window.firebase && firebase.auth && firebase.auth().currentUser;
     if (!remote) return;
-    btn.dataset.busy = '1';
-    var ref = this.db.collection('votes').doc(id);
-    this.db.runTransaction(function (tx) {
-      return tx.get(ref).then(function (snap) {
-        if (!snap.exists) {
-          tx.set(ref, { count: 1 });
-          return;
-        }
-        var count = Number(snap.data().count) || 0;
-        tx.update(ref, { count: count + 1 });
+    ids.forEach(function (id) {
+      var ref = self.db.collection('votes').doc(id);
+      self.db.runTransaction(function (tx) {
+        return tx.get(ref).then(function (snap) {
+          if (!snap.exists) { tx.set(ref, { count: 1 }); return; }
+          tx.update(ref, { count: (Number(snap.data().count) || 0) + 1 });
+        });
+      }).catch(function () {
+        self.counts[id] = Math.max(0, (Number(self.counts[id]) || 1) - 1);
+        self.writeCounts();
       });
-    }).catch(function () {
-      self.counts[id] = Math.max(0, (Number(self.counts[id]) || 1) - 1);
-      self.writeCounts();
-      self.paintHearts(root);
-    }).then(function () { delete btn.dataset.busy; });
+    });
   },
 
   loadScript: function (src) {
