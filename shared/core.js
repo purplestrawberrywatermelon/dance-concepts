@@ -48,7 +48,7 @@
 
   var P = {
     c: (q.get('c') || '03').replace(/[^0-9]/g, '').padStart(2, '0'),
-    s: ['setup', 'result', 'gallery'].indexOf(q.get('s')) >= 0 ? q.get('s') : 'setup',
+    s: ['setup', 'thanks', 'result', 'gallery'].indexOf(q.get('s')) >= 0 ? q.get('s') : 'setup',
     isStatic: q.get('static') === '1',
     quiet: q.get('quiet') === '1' || q.get('static') === '1',
     auto: q.get('auto') === '1'
@@ -305,9 +305,9 @@
     var n = new URLSearchParams();
     n.set('c', P.c); n.set('s', screen);
     if (screen === 'gallery' && S.page > 0) n.set('page', S.page + 1);
-    if (screen === 'result') {
+    if (screen === 'result' || screen === 'thanks') {
       Object.keys(selNow).forEach(function (k) { if (selNow[k]) n.set(k, selNow[k]); });
-      if (extra && extra.state) n.set('state', extra.state);
+      if (screen === 'result' && extra && extra.state) n.set('state', extra.state);
     }
     location.search = n.toString();
   }
@@ -347,19 +347,43 @@
   /* ---------- gallery ---------- */
   var turning = false;
 
+  /* 'new' = newest first (data order). 'liked' = most liked first, ties keep
+     newest first. Likes come from concept.likes(entry). */
+  var sortMode = 'new';
+  try { if (sessionStorage.getItem('dp-gallery-sort') === 'liked') sortMode = 'liked'; } catch (e) { /* ignore */ }
+
+  function ordered() {
+    if (sortMode !== 'liked' || !concept || !concept.likes) return D.gallery;
+    var rank = {};
+    D.gallery.forEach(function (e, i) { rank[e.entry] = i; });
+    return D.gallery.slice().sort(function (a, b) {
+      return (concept.likes(b.entry) - concept.likes(a.entry)) || (rank[a.entry] - rank[b.entry]);
+    });
+  }
+
+  DP.getSort = function () { return sortMode; };
+  DP.setSort = function (mode, keepPage) {
+    sortMode = mode === 'liked' ? 'liked' : 'new';
+    try { sessionStorage.setItem('dp-gallery-sort', sortMode); } catch (e) { /* ignore */ }
+    if (P.s !== 'gallery') return;
+    if (!keepPage) S.page = 0;
+    fillGrid();
+    apply();
+  };
+
   function tilesHTML(page) {
-    var items = D.gallery.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+    var items = ordered().slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
     var out = '';
     for (var i = 0; i < PER_PAGE; i++) {
       var e = items[i];
-      var cls = 'tile' + (e ? '' : ' is-empty') + (e && page === 0 && i === 0 ? ' is-latest' : '');
+      var cls = 'tile' + (e ? '' : ' is-empty') + (e && e === D.gallery[0] ? ' is-latest' : '');
       var inner = '';
       if (e) {
         inner = concept.tile({
           entry: e.entry, name: e.name, ago: e.ago, src: e.src,
           no: pad(page * PER_PAGE + i + 1),
           dance: byId(D.dances, e.dance), hair: byId(D.hairs, e.hair), outfit: byId(D.outfits, e.outfit),
-          latest: page === 0 && i === 0
+          latest: e === D.gallery[0]
         }, i, DP);
       } else if (concept.empty) {
         inner = concept.empty(i, DP);
@@ -430,7 +454,7 @@
       case 'dance': case 'hair': case 'outfit': choose(name, ds.id); break;
       case 'back': setStep(S.step === 'name' ? 'style' : 'pick'); break;
       case 'restart': if (P.s === 'setup') restart(); else go('setup'); break;
-      case 'create': if (S.name.trim()) go('result', { state: 'reveal' }); break;
+      case 'create': if (S.name.trim()) go('thanks'); break;
       case 'replay': playReveal(); break;
       case 'page': turn(Number(ds.dir) || 1); break;
       case 'goto': go(ds.screen); break;
