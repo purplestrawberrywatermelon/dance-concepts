@@ -21,7 +21,7 @@ DP.register({
     };
     return '<nav class="nav">' +
       '<button type="button" class="nav__back" data-nav="back" aria-label="Back">&larr;</button>' +
-      item('setup', 'Setup') + item('result', 'Result') + item('gallery', 'Gallery') +
+      item('setup', 'Setup') + item('gallery', 'Gallery') +
       (here === 'gallery' ? '<button type="button" class="nav__reset" data-reset-votes>Reset votes</button>' : '') +
       '</nav>';
   },
