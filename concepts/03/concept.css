@@ -899,6 +899,87 @@
   display: flex;
 }
 
+/* ---------- thank-you screen ---------- */
+.thx {
+  position: absolute;
+  left: 110px;
+  top: 90px;
+  width: 900px;
+}
+
+.thx__tag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 30px;
+  font: 700 20px "Space Grotesk", sans-serif;
+  letter-spacing: .03em;
+}
+
+.thx__h {
+  margin: 0;
+  font: 700 120px/.98 "Space Grotesk", sans-serif;
+  letter-spacing: -.05em;
+}
+
+.thx__name {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--pink);
+  font-size: min(150px, calc(1300px / var(--name-len)));
+  white-space: nowrap;
+}
+
+.thx__p {
+  margin: 36px 0 0;
+  color: var(--muted);
+  font: 500 26px/1.45 Inter, sans-serif;
+}
+
+.thx .facts {
+  width: 560px;
+  margin: 44px 0 0;
+}
+
+.thx__home {
+  display: inline-flex;
+  align-items: center;
+  height: 68px;
+  margin-top: 56px;
+  padding: 0 44px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #0b0b0c;
+  font: 700 25px/1 "Space Grotesk", sans-serif;
+  letter-spacing: -.01em;
+  transition: transform .15s ease;
+}
+
+.thx__home:hover {
+  transform: scale(1.04);
+}
+
+.thx__frame {
+  position: absolute;
+  left: 1050px;
+  top: 90px;
+  width: 760px;
+  height: 900px;
+}
+
+.thx__frame .slot {
+  position: absolute;
+  inset: 0;
+}
+
+.wall__sort {
+  margin-right: 14px;
+}
+
+.wall__sort button {
+  letter-spacing: .04em;
+}
+
 /* Staff-only screen switcher: a thin banner across the top edge in the page
    colour. Content lives in .body underneath, so nothing is covered. */
 .nav {
