@@ -22,6 +22,7 @@ DP.register({
     return '<nav class="nav">' +
       '<button type="button" class="nav__back" data-nav="back" aria-label="Back">&larr;</button>' +
       item('setup', 'Setup') + item('result', 'Result') + item('gallery', 'Gallery') +
+      (here === 'gallery' ? '<button type="button" class="nav__reset" data-reset-votes>Reset votes</button>' : '') +
       '</nav>';
   },
 
@@ -305,6 +306,8 @@ DP.register({
         self.applyLayout(root);
         return;
       }
+      var rst = ev.target.closest && ev.target.closest('[data-reset-votes]');
+      if (rst) { self.resetVotes(root, rst); return; }
       var sortBtn = ev.target.closest && ev.target.closest('.wall__sort [data-sort]');
       if (sortBtn) { DP.setSort(sortBtn.dataset.sort); return; }
       var vb = ev.target.closest && ev.target.closest('[data-vote-act]');
@@ -345,7 +348,7 @@ DP.register({
       btn.classList.toggle('is-on', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       var label = btn.querySelector('b');
-      if (label && n != null) label.textContent = String(count);
+      if (label) label.textContent = String(count);
     });
   },
 
@@ -360,6 +363,39 @@ DP.register({
       self.writeCounts();
       self.paintHearts(root);
     }, function () { self.watching = false; });
+  },
+
+  /* Staff tool for test runs. Press twice within 4 seconds. Clears the totals
+     kept in this browser. Totals stored in Firebase are cleared in the Firebase
+     console (the rules only let a client move a count by 1). */
+  resetVotes: function (root, btn) {
+    var self = this;
+    var label = 'Reset votes';
+    var cfg = window.DP_FIREBASE;
+    clearTimeout(this.resetTimer);
+    if (cfg && cfg.apiKey && cfg.projectId) {
+      btn.textContent = 'Votes are in Firebase: delete the votes collection there';
+      this.resetTimer = setTimeout(function () { btn.textContent = label; }, 5000);
+      return;
+    }
+    if (!btn.hasAttribute('data-armed')) {
+      btn.setAttribute('data-armed', '');
+      btn.textContent = 'Tap again to reset';
+      this.resetTimer = setTimeout(function () {
+        btn.removeAttribute('data-armed');
+        btn.textContent = label;
+      }, 4000);
+      return;
+    }
+    btn.removeAttribute('data-armed');
+    this.counts = {};
+    this.picks = {};
+    try { localStorage.removeItem('dp-vote-counts'); } catch (e) { /* ignore */ }
+    this.paintHearts(root);
+    this.paintVote(root);
+    if (window.DP) DP.setSort(DP.getSort(), true);
+    btn.textContent = 'Votes reset';
+    this.resetTimer = setTimeout(function () { btn.textContent = label; }, 1800);
   },
 
   voting: false,
