@@ -193,10 +193,33 @@ DP.register({
       '</section></div>';
   },
 
+  /* Shown after "Create": the video takes a while to make, so the result is
+     picked up at a separate Result station. */
+  thanks: function (DP) {
+    return this.nav(DP) + '<div class="body">' +
+      '<section class="thx">' +
+        '<p class="thx__tag"><span class="brand-dot"></span>Submitted</p>' +
+        '<h1 class="thx__h">Thank you,<br><span class="thx__name">' + DP.t('name') + '</span></h1>' +
+        '<p class="thx__p">Your virtual idol is being created.<br>Come to the Result station in a few minutes to see your debut.</p>' +
+        '<dl class="facts">' +
+          '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
+          '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
+          '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
+        '</dl>' +
+        '<button type="button" class="thx__home" data-act="restart">Back to home</button>' +
+      '</section>' +
+      '<div class="thx__frame">' + DP.sourceSlot() + '</div>' +
+    '</div>';
+  },
+
   gallery: function (DP) {
     return this.nav(DP) + '<div class="body"><div class="wall" data-grid></div>' +
       '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
       '<div class="wall__pager">' +
+        '<span class="wall__layouts wall__sort">' +
+          '<button type="button" data-sort="new" aria-pressed="true">Newest</button>' +
+          '<button type="button" data-sort="liked" aria-pressed="false">Most liked</button>' +
+        '</span>' +
         '<span class="wall__layouts">' +
           '<button type="button" data-layout="4x3" aria-pressed="true">4×3</button>' +
           '<button type="button" data-layout="3x4" aria-pressed="false">3×4</button>' +
@@ -219,7 +242,13 @@ DP.register({
   tile: function (e, i, DP) {
     return DP.entrySlot(e) +
       '<span class="g-lt">' + (e.latest ? '<i>New</i>' : '') + '<b>' + DP.esc(e.name) + '</b><em>' + e.dance.title + '</em></span>' +
+      '<span class="heart" data-entry="' + e.entry + '" aria-label="Likes">' + this.heartSvg + '<b>0</b></span>' +
       '<span class="pick" aria-hidden="true"></span>';
+  },
+
+  likes: function (id) {
+    if (!this.counts) this.counts = this.readCounts();
+    return Number(this.counts[id]) || 0;
   },
 
   empty: function () {
@@ -233,6 +262,12 @@ DP.register({
       if (sessionStorage.getItem('dp-gallery-layout') === '3x4') layout = '3x4';
     } catch (e) { /* ignore */ }
     root.dataset.layout = layout;
+    var mode = window.DP ? DP.getSort() : 'new';
+    root.querySelectorAll('.wall__sort [data-sort]').forEach(function (btn) {
+      var on = btn.dataset.sort === mode;
+      btn.classList.toggle('is-on', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
     root.querySelectorAll('.wall__layouts [data-layout]').forEach(function (btn) {
       var on = btn.dataset.layout === layout;
       btn.classList.toggle('is-on', on);
@@ -270,6 +305,8 @@ DP.register({
         self.applyLayout(root);
         return;
       }
+      var sortBtn = ev.target.closest && ev.target.closest('.wall__sort [data-sort]');
+      if (sortBtn) { DP.setSort(sortBtn.dataset.sort); return; }
       var vb = ev.target.closest && ev.target.closest('[data-vote-act]');
       if (vb) { self.voteAction(root, vb.dataset.voteAct); return; }
       var tile = ev.target.closest && ev.target.closest('.tile[data-entry]');
@@ -312,22 +349,17 @@ DP.register({
     });
   },
 
+  /* One listener on the whole votes collection: every video's total stays
+     current, which "Most liked" needs, not only the ones on this page. */
   watchVotes: function (root) {
     var self = this;
-    if (!this.db) return;
-    var ids = [];
-    root.querySelectorAll('.heart').forEach(function (btn) { ids.push(btn.dataset.entry); });
-    var key = ids.join(',');
-    if (key === this.watchKey) return;
-    this.watchKey = key;
-    (this.unsubs || []).forEach(function (fn) { fn(); });
-    this.unsubs = [];
-    ids.forEach(function (id) {
-      self.unsubs.push(self.db.collection('votes').doc(id).onSnapshot(function (snap) {
-        self.counts[id] = snap.exists ? (Number(snap.data().count) || 0) : 0;
-        self.paintHearts(root);
-      }));
-    });
+    if (!this.db || this.watching) return;
+    this.watching = true;
+    this.db.collection('votes').onSnapshot(function (snap) {
+      snap.forEach(function (doc) { self.counts[doc.id] = Number(doc.data().count) || 0; });
+      self.writeCounts();
+      self.paintHearts(root);
+    }, function () { self.watching = false; });
   },
 
   voting: false,
@@ -394,6 +426,7 @@ DP.register({
     this.writeCounts();
     this.pushRemote(ids);
     this.endVote(root);
+    if (window.DP && DP.getSort() === 'liked') DP.setSort('liked', true);
     root.dataset.thanks = '1';
     clearTimeout(this.thanksTimer);
     this.thanksTimer = setTimeout(function () { delete root.dataset.thanks; }, 3200);
