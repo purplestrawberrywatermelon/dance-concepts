@@ -1,12 +1,9 @@
 /*
-  Shared sample data for every concept. All 12 concepts read the same object,
-  so the designs can be compared on identical content.
+  Sample data for the concept 03 screen.
 
-  MEDIA IS INTENTIONALLY EMPTY.
-  Every `src` below is ''. While it is empty the screen renders a labelled
-  placeholder slot at the size and ratio the concept intends. Put a relative
-  path in `src` and the same slot becomes a <video> / <img> - no concept code
-  has to change.
+  Empty `src` renders a labelled placeholder. A relative path becomes a
+  <video> or <img> in the same slot. Gallery tiles reuse the dance1 and
+  dance2 result clips until each entry has its own video.
 
   Media for each dance lives together under ref/dance1 and ref/dance2.
 */
@@ -38,50 +35,30 @@ window.DP_DATA = {
      chosen in the setup screen first. */
   participant: { name: 'Junho', entry: 142, dance: 'd2', hair: 'h1', outfit: 'o1', src: 'ref/dance2/output3.mp4' },
 
-  /* Newest first. 22 entries = 2 gallery pages (16 + 6; 12 + 10 for concepts that use perPage: 12). */
+  /* Newest first. 22 entries = 2 gallery pages of 12. Clips are the existing
+     dance1 / dance2 results, repeated so every tile has a video. */
   gallery: [
-    { entry: 142, name: 'Junho',   dance: 'd2', hair: 'h1', outfit: 'o1', ago: 'just now', src: '' },
-    { entry: 141, name: 'Maya',    dance: 'd1', hair: 'h2', outfit: 'o2', ago: '2 min',  src: '' },
-    { entry: 140, name: 'Arjun',   dance: 'd3', hair: 'h1', outfit: 'o1', ago: '4 min',  src: '' },
-    { entry: 139, name: 'Sofia',   dance: 'd2', hair: 'h1', outfit: 'o2', ago: '7 min',  src: '' },
-    { entry: 138, name: 'Kenji',   dance: 'd1', hair: 'h2', outfit: 'o1', ago: '9 min',  src: '' },
-    { entry: 137, name: 'Amara',   dance: 'd3', hair: 'h2', outfit: 'o2', ago: '12 min', src: '' },
-    { entry: 136, name: 'Lucas',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '15 min', src: '' },
-    { entry: 135, name: 'Yuna',    dance: 'd2', hair: 'h2', outfit: 'o1', ago: '18 min', src: '' },
-    { entry: 134, name: 'Omar',    dance: 'd3', hair: 'h1', outfit: 'o2', ago: '21 min', src: '' },
-    { entry: 133, name: 'Elena',   dance: 'd1', hair: 'h1', outfit: 'o2', ago: '24 min', src: '' },
-    { entry: 132, name: 'Wei',     dance: 'd2', hair: 'h2', outfit: 'o1', ago: '28 min', src: '' },
-    { entry: 131, name: 'Priya',   dance: 'd3', hair: 'h2', outfit: 'o1', ago: '31 min', src: '' },
-    { entry: 130, name: 'Noah',    dance: 'd2', hair: 'h1', outfit: 'o2', ago: '35 min', src: '' },
-    { entry: 129, name: 'Chaehee', dance: 'd1', hair: 'h2', outfit: 'o1', ago: '38 min', src: '' },
-    { entry: 128, name: 'Mateo',   dance: 'd3', hair: 'h1', outfit: 'o2', ago: '42 min', src: '' },
-    { entry: 127, name: 'Ingrid',  dance: 'd1', hair: 'h1', outfit: 'o2', ago: '45 min', src: '' },
-    { entry: 126, name: 'Tariq',   dance: 'd2', hair: 'h2', outfit: 'o2', ago: '49 min', src: '' },
-    { entry: 125, name: 'Hana',    dance: 'd3', hair: 'h1', outfit: 'o1', ago: '52 min', src: '' },
-    { entry: 124, name: 'Diego',   dance: 'd1', hair: 'h2', outfit: 'o1', ago: '56 min', src: '' },
-    { entry: 123, name: 'Zoe',     dance: 'd2', hair: 'h1', outfit: 'o2', ago: '1 hr',   src: '' },
-    { entry: 122, name: 'Jinwoo',  dance: 'd3', hair: 'h2', outfit: 'o1', ago: '1 hr',   src: '' },
-    { entry: 121, name: 'Leila',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '1 hr',   src: '' }
-  ],
-
-  /* Concept index used by the review shell. */
-  groups: [
-    { id: 'A', name: 'Matches the existing website', note: 'Colours, typefaces, spacing and buttons taken from become-virtual-idol.github.io' },
-    { id: 'B', name: 'Lively event',                 note: 'Higher energy, faster feedback, bolder reveals' },
-    { id: 'C', name: 'Calm',                         note: 'More whitespace, slower motion, quieter type' }
-  ],
-  concepts: [
-    { id: '01', group: 'A', name: 'Extended',          line: 'The website hero carried over: big headline on the left, tilted video cards on the right.' },
-    { id: '02', group: 'A', name: 'Research Exhibit',  line: 'Figure panels and spec tables that read like a demo poster, input to output.' },
-    { id: '03', group: 'A', name: 'Editorial',         line: 'Full-height video strips, a single line of type, and a named index instead of captions.' },
-    { id: '04', group: 'A', name: 'Poster',            line: 'Off-grid collage with video bleeding off the edge and type running vertically.' },
-    { id: '05', group: 'B', name: 'Music Video',       line: 'One dance at a time, full screen, with a lower-third bar and hard cuts.' },
-    { id: '06', group: 'B', name: 'Stage',             line: 'Drapes, footlights and a marquee: the result arrives as a curtain call.' },
-    { id: '07', group: 'B', name: 'Festival',          line: 'Screen-filling words as buttons, flat colour blocks, the name slammed in letter by letter.' },
-    { id: '08', group: 'B', name: 'Rhythm Game',       line: 'Lanes and number keys, instant hit feedback, a countdown into CLEAR.' },
-    { id: '09', group: 'C', name: 'Museum',            line: 'Framed works on a white wall with placards; the lights come up on the result.' },
-    { id: '10', group: 'C', name: 'Portrait Exhibit',  line: 'One tall portrait in focus, annotated like a study, titled with the participant name.' },
-    { id: '11', group: 'C', name: 'Cinema',            line: 'Film strip, letterbox and a slate; a leader countdown fades into the title card.' },
-    { id: '12', group: 'C', name: 'Creative Studio',   line: 'Soft arches and round swatches on a warm board, everything eases into place.' }
+    { entry: 142, name: 'Junho',   dance: 'd2', hair: 'h1', outfit: 'o1', ago: 'just now', src: 'ref/dance2/output1.mp4' },
+    { entry: 141, name: 'Maya',    dance: 'd1', hair: 'h2', outfit: 'o2', ago: '2 min',  src: 'ref/dance1/output1.mp4' },
+    { entry: 140, name: 'Arjun',   dance: 'd3', hair: 'h1', outfit: 'o1', ago: '4 min',  src: 'ref/dance1/output2.mp4' },
+    { entry: 139, name: 'Sofia',   dance: 'd2', hair: 'h1', outfit: 'o2', ago: '7 min',  src: 'ref/dance2/output2.mp4' },
+    { entry: 138, name: 'Kenji',   dance: 'd1', hair: 'h2', outfit: 'o1', ago: '9 min',  src: 'ref/dance1/output2.mp4' },
+    { entry: 137, name: 'Amara',   dance: 'd3', hair: 'h2', outfit: 'o2', ago: '12 min', src: 'ref/dance2/output3.mp4' },
+    { entry: 136, name: 'Lucas',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '15 min', src: 'ref/dance1/output3.mp4' },
+    { entry: 135, name: 'Yuna',    dance: 'd2', hair: 'h2', outfit: 'o1', ago: '18 min', src: 'ref/dance2/output3.mp4' },
+    { entry: 134, name: 'Omar',    dance: 'd3', hair: 'h1', outfit: 'o2', ago: '21 min', src: 'ref/dance1/output3.mp4' },
+    { entry: 133, name: 'Elena',   dance: 'd1', hair: 'h1', outfit: 'o2', ago: '24 min', src: 'ref/dance1/output1.mp4' },
+    { entry: 132, name: 'Wei',     dance: 'd2', hair: 'h2', outfit: 'o1', ago: '28 min', src: 'ref/dance2/output1.mp4' },
+    { entry: 131, name: 'Priya',   dance: 'd3', hair: 'h2', outfit: 'o1', ago: '31 min', src: 'ref/dance2/output1.mp4' },
+    { entry: 130, name: 'Noah',    dance: 'd2', hair: 'h1', outfit: 'o2', ago: '35 min', src: 'ref/dance2/output2.mp4' },
+    { entry: 129, name: 'Chaehee', dance: 'd1', hair: 'h2', outfit: 'o1', ago: '38 min', src: 'ref/dance1/output2.mp4' },
+    { entry: 128, name: 'Mateo',   dance: 'd3', hair: 'h1', outfit: 'o2', ago: '42 min', src: 'ref/dance1/output1.mp4' },
+    { entry: 127, name: 'Ingrid',  dance: 'd1', hair: 'h1', outfit: 'o2', ago: '45 min', src: 'ref/dance1/output3.mp4' },
+    { entry: 126, name: 'Tariq',   dance: 'd2', hair: 'h2', outfit: 'o2', ago: '49 min', src: 'ref/dance2/output3.mp4' },
+    { entry: 125, name: 'Hana',    dance: 'd3', hair: 'h1', outfit: 'o1', ago: '52 min', src: 'ref/dance2/output2.mp4' },
+    { entry: 124, name: 'Diego',   dance: 'd1', hair: 'h2', outfit: 'o1', ago: '56 min', src: 'ref/dance1/output1.mp4' },
+    { entry: 123, name: 'Zoe',     dance: 'd2', hair: 'h1', outfit: 'o2', ago: '1 hr',   src: 'ref/dance2/output1.mp4' },
+    { entry: 122, name: 'Jinwoo',  dance: 'd3', hair: 'h2', outfit: 'o1', ago: '1 hr',   src: 'ref/dance1/output3.mp4' },
+    { entry: 121, name: 'Leila',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '1 hr',   src: 'ref/dance1/output2.mp4' }
   ]
 };

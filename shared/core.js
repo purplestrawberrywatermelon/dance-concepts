@@ -23,7 +23,7 @@
     data-phase="gen|reveal|done"
     data-turn="out|in"  data-dir="next|prev"
 
-  URL: screen.html?c=05&s=setup|result|gallery
+  URL: index.html or screen.html?c=03&s=setup|result|gallery
        &step=pick|style|name  &state=gen|reveal|done  &page=2
        &dance=d2&hair=h1&outfit=o1&name=Junho
        &static=1 (freeze all motion)  &quiet=1 (skip the intro only)  &auto=1
@@ -41,7 +41,7 @@
   var COLS = 4;        /* overridden per concept: cols */
 
   var P = {
-    c: (q.get('c') || '01').replace(/[^0-9]/g, '').padStart(2, '0'),
+    c: (q.get('c') || '03').replace(/[^0-9]/g, '').padStart(2, '0'),
     s: ['setup', 'result', 'gallery'].indexOf(q.get('s')) >= 0 ? q.get('s') : 'setup',
     isStatic: q.get('static') === '1',
     quiet: q.get('quiet') === '1' || q.get('static') === '1',
@@ -510,8 +510,7 @@
     setTimeout(start, 1500);
   };
 
-  var meta = byId(D.concepts, P.c);
-  document.title = (meta ? meta.id + ' ' + meta.name : 'Concept') + ' - ' + P.s;
+  document.title = (D.event && D.event.title ? D.event.title : 'AI Dance Experience') + ' — ' + P.s;
   var js = document.createElement('script');
   js.src = 'concepts/' + P.c + '/concept.js';
   js.onerror = function () {
