@@ -1022,6 +1022,17 @@
   color: var(--pink);
 }
 
+.nav .nav__reset {
+  position: absolute;
+  right: 12px;
+  top: 0;
+  color: rgba(255, 255, 255, .16);
+}
+
+.nav .nav__reset[data-armed] {
+  color: var(--pink);
+}
+
 .nav__back {
   width: 32px;
   padding: 0;
