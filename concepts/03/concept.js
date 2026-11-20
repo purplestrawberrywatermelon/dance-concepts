@@ -123,6 +123,7 @@ DP.register({
     if (DP.params.s === 'result') {
       this.paintHearts(root);
       this.bootFirebase(root);
+      this.resultSound(root);
       return;
     }
     if (DP.params.s !== 'gallery') return;
@@ -176,6 +177,7 @@ DP.register({
 
   result: function (DP) {
     return this.nav(DP) + '<div class="body"><div class="frame">' + DP.resultSlot() + '</div>' +
+      '<button type="button" class="unmute" data-unmute>&#9835; Tap for sound</button>' +
       '<p class="gen">One moment</p>' +
       '<section class="col">' +
         '<h1 class="name rv" style="--d:0">' + DP.t('name') + '</h1>' +
@@ -254,6 +256,28 @@ DP.register({
 
   empty: function () {
     return '';
+  },
+
+  /* ---------- result sound ----------
+     The result video plays with sound. A browser may refuse that on a fresh
+     page; the video then plays muted and a "Tap for sound" button appears.
+     Any tap on the page turns the sound on. */
+  resultSound: function (root) {
+    var v = root.querySelector('.frame video');
+    if (!v) return;
+    var sync = function () {
+      if (v.muted || v.paused) root.dataset.silent = '1';
+      else delete root.dataset.silent;
+    };
+    ['playing', 'pause', 'volumechange'].forEach(function (ev) { v.addEventListener(ev, sync); });
+    this.play(v, true);
+    setTimeout(sync, 500);
+    root.addEventListener('pointerdown', function () {
+      if (!root.dataset.silent) return;
+      v.muted = false;
+      v.volume = 1;
+      v.play().catch(function () {});
+    }, true);
   },
 
   /* ---------- gallery layout ---------- */
