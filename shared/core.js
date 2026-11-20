@@ -55,6 +55,14 @@
   };
   DP.params = P;
 
+  /* ?entry=141 on the result screen shows that gallery video instead of the new one. */
+  var viewEntry = null;
+  (function () {
+    var id = parseInt(q.get('entry') || '', 10);
+    if (!id) return;
+    for (var i = 0; i < D.gallery.length; i++) if (D.gallery[i].entry === id) viewEntry = D.gallery[i];
+  })();
+
   var S = { step: 'pick', dance: null, hair: null, outfit: null, name: '', phase: 'done', page: 0 };
   var concept = null;
   var timers = [];
@@ -91,8 +99,8 @@
       hair: byId(D.hairs, S.hair),
       outfit: byId(D.outfits, S.outfit),
       name: S.name,
-      entry: p.entry,
-      url: D.event.linkBase + p.entry
+      entry: viewEntry ? viewEntry.entry : p.entry,
+      url: D.event.linkBase + (viewEntry ? viewEntry.entry : p.entry)
     };
   }
   DP.sel = sel;
@@ -154,7 +162,7 @@
     return DP.slot({ label: 'Example result', sub: DP.t('dance.title'), src: d ? d.example : '', cls: cls, tone: 1 });
   };
   DP.resultSlot = function (cls) {
-    return DP.slot({ label: 'Result video', sub: DP.t('name'), src: D.participant.src, cls: cls, tone: 1 });
+    return DP.slot({ label: 'Result video', sub: DP.t('name'), src: viewEntry ? viewEntry.src : D.participant.src, cls: cls, tone: 1 });
   };
   DP.sourceSlot = function (cls) {
     var d = sel().dance;
@@ -296,6 +304,7 @@
     }
     var n = new URLSearchParams();
     n.set('c', P.c); n.set('s', screen);
+    if (screen === 'gallery' && S.page > 0) n.set('page', S.page + 1);
     if (screen === 'result') {
       Object.keys(selNow).forEach(function (k) { if (selNow[k]) n.set(k, selNow[k]); });
       if (extra && extra.state) n.set('state', extra.state);
@@ -303,6 +312,23 @@
     location.search = n.toString();
   }
   DP.go = go;
+
+  /* Open the result page of one gallery video. The current gallery page is
+     passed along so "Gallery" brings the visitor back to the same place. */
+  DP.openEntry = function (id) {
+    var e = null;
+    for (var i = 0; i < D.gallery.length; i++) if (String(D.gallery[i].entry) === String(id)) e = D.gallery[i];
+    if (!e) return;
+    if (embedded) {
+      window.parent.postMessage({ type: 'dp:go', c: P.c, screen: 'result',
+        sel: { dance: e.dance, hair: e.hair, outfit: e.outfit, name: e.name }, state: 'done' }, '*');
+      return;
+    }
+    var n = new URLSearchParams();
+    n.set('c', P.c); n.set('s', 'result'); n.set('entry', e.entry); n.set('state', 'done');
+    if (S.page > 0) n.set('page', S.page + 1);
+    location.search = n.toString();
+  };
 
   /* ---------- result reveal ---------- */
   function setPhase(ph) { S.phase = ph; apply(); }
@@ -338,7 +364,7 @@
       } else if (concept.empty) {
         inner = concept.empty(i, DP);
       }
-      out += '<div class="' + cls + '" style="--i:' + i + ';--r:' + Math.floor(i / COLS) + ';--c:' + (i % COLS) + '">' + inner + '</div>';
+      out += '<div class="' + cls + '"' + (e ? ' data-entry="' + e.entry + '"' : '') + ' style="--i:' + i + ';--r:' + Math.floor(i / COLS) + ';--c:' + (i % COLS) + '">' + inner + '</div>';
     }
     return out;
   }
@@ -475,10 +501,11 @@
         if (!S.name && q.get('name') == null) S.name = p.name;
       } else if (S.dance) { S.step = 'style'; }
     } else {
-      S.dance = pick(D.dances, 'dance', p.dance);
-      S.hair = pick(D.hairs, 'hair', p.hair);
-      S.outfit = pick(D.outfits, 'outfit', p.outfit);
-      S.name = (q.get('name') || p.name).slice(0, 14);
+      var base = viewEntry || p;
+      S.dance = pick(D.dances, 'dance', base.dance);
+      S.hair = pick(D.hairs, 'hair', base.hair);
+      S.outfit = pick(D.outfits, 'outfit', base.outfit);
+      S.name = (q.get('name') || base.name).slice(0, 14);
       var pages = Math.ceil(D.gallery.length / PER_PAGE);
       S.page = Math.max(0, Math.min(pages - 1, (parseInt(q.get('page') || '1', 10) || 1) - 1));
     }
