@@ -216,14 +216,15 @@ DP.register({
   },
 
   gallery: function (DP) {
-    return '<div class="body"><div class="wall" data-grid></div>' +
+    return '<nav class="nav">' +
+      '<button type="button" class="nav__reset" data-reset-votes>Reset votes</button>' +
+      '</nav><div class="body"><div class="wall" data-grid></div>' +
       '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
       '<div class="wall__pager">' +
         '<span class="wall__layouts wall__sort">' +
           '<button type="button" data-sort="new" aria-pressed="true">Newest</button>' +
           '<button type="button" data-sort="liked" aria-pressed="false">Most liked</button>' +
         '</span>' +
-        '<button type="button" class="wall__reset" data-reset-votes>Reset votes</button>' +
         '<button data-act="page" data-dir="-1" aria-label="Previous page">&larr;</button>' +
         '<b>' + DP.t('page2') + ' / ' + DP.t('pages2') + '</b>' +
         '<button data-act="page" data-dir="1" aria-label="Next page">&rarr;</button></div>' +
