@@ -490,10 +490,9 @@
 
 .keep .qr {
   flex: none;
-  width: 180px;
-  --qr-fg: #fff;
-  --qr-bg: #0b0b0c;
-  outline: 1px solid var(--line);
+  width: 220px;
+  padding: 12px;
+  background: #fff;
 }
 
 .keep p {
@@ -540,8 +539,7 @@
 }
 
 /* ================= gallery ================= */
-/* Full-bleed wall. Labels are rows × columns.
-   4×3 is 4 rows × 3 columns (640×270). 3×4 is 3 rows × 4 columns (480×360). */
+/* Full-bleed wall. 4×3 is 4 rows × 3 columns (640×270). */
 .wall {
   position: absolute;
   inset: 0;
@@ -550,31 +548,26 @@
   grid-template-rows: repeat(4, 1fr);
 }
 
-#stage[data-layout="3x4"] .wall {
-  grid-template-columns: repeat(4, 480px);
-  grid-template-rows: repeat(3, 1fr);
-}
-
 .tile {
   position: relative;
   overflow: hidden;
-  cursor: pointer;
+  cursor: default;
   animation: dim 18s step-end infinite;
   animation-delay: calc(var(--i) * 1.5s);
   transition: transform .2s var(--ease), filter .2s ease;
   transform-origin: var(--ox, 50%) var(--oy, 50%);
 }
 
+#stage[data-vote="on"] .tile {
+  cursor: pointer;
+}
+
 /* Tiles on the screen edge grow inward, so their pink frame is not cut off.
-   4x3 = 3 columns x 4 rows, 3x4 = 4 columns x 3 rows. */
-#stage:not([data-layout="3x4"]) .tile:nth-child(3n+1) { --ox: 0%; }
-#stage:not([data-layout="3x4"]) .tile:nth-child(3n)   { --ox: 100%; }
-#stage:not([data-layout="3x4"]) .tile:nth-child(-n+3) { --oy: 0%; }
-#stage:not([data-layout="3x4"]) .tile:nth-child(n+10) { --oy: 100%; }
-#stage[data-layout="3x4"] .tile:nth-child(4n+1) { --ox: 0%; }
-#stage[data-layout="3x4"] .tile:nth-child(4n)   { --ox: 100%; }
-#stage[data-layout="3x4"] .tile:nth-child(-n+4) { --oy: 0%; }
-#stage[data-layout="3x4"] .tile:nth-child(n+9)  { --oy: 100%; }
+   3 columns × 4 rows. */
+.tile:nth-child(3n+1) { --ox: 0%; }
+.tile:nth-child(3n)   { --ox: 100%; }
+.tile:nth-child(-n+3) { --oy: 0%; }
+.tile:nth-child(n+10) { --oy: 100%; }
 
 /* Pink frame: shown on hover and on picked videos. A pseudo-element, because
    an inset shadow on the tile would sit under the video. */
@@ -946,10 +939,11 @@
 }
 
 .thx__name {
-  display: inline-block;
+  margin: 12px 0 0;
   max-width: 100%;
   color: var(--pink);
-  font-size: min(150px, calc(1300px / var(--name-len)));
+  font: 700 min(96px, calc(900px / var(--name-len)))/1 "Space Grotesk", sans-serif;
+  letter-spacing: -.04em;
   white-space: nowrap;
 }
 
@@ -1024,7 +1018,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 32px;
+  top: 0;
   bottom: 0;
   overflow: hidden;
 }
@@ -1116,6 +1110,21 @@
   color: var(--muted);
   font-size: 22px;
   transition: color .2s ease, background .2s ease;
+}
+
+.wall__pager > .wall__reset {
+  height: 28px;
+  margin-right: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  color: rgba(255, 255, 255, .35);
+  font: 700 14px/26px Inter, sans-serif;
+  letter-spacing: .04em;
+}
+
+.wall__pager > .wall__reset[data-armed] {
+  border-color: var(--pink);
+  color: var(--pink);
 }
 
 .wall__pager > button:hover {

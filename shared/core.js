@@ -23,7 +23,10 @@
     data-phase="gen|reveal|done"
     data-turn="out|in"  data-dir="next|prev"
 
-  URL: index.html or screen.html?c=03&s=setup|result|gallery
+  URL: index.html                         selection, then ?s=thanks
+       index.html?s=gallery               vote on other videos
+       index.html?s=mine&entry=142        that person's video and download QR
+       These three screens are not linked. screen.html?c=03&s=... is the same.
        &step=pick|style|name  &state=gen|reveal|done  &page=2
        &dance=d2&hair=h1&outfit=o1&name=Junho
        &static=1 (freeze all motion)  &quiet=1 (skip the intro only)  &auto=1
@@ -48,7 +51,7 @@
 
   var P = {
     c: (q.get('c') || '03').replace(/[^0-9]/g, '').padStart(2, '0'),
-    s: ['setup', 'thanks', 'result', 'gallery'].indexOf(q.get('s')) >= 0 ? q.get('s') : 'setup',
+    s: ['setup', 'thanks', 'result', 'gallery', 'mine'].indexOf(q.get('s')) >= 0 ? q.get('s') : 'setup',
     isStatic: q.get('static') === '1',
     quiet: q.get('quiet') === '1' || q.get('static') === '1',
     auto: q.get('auto') === '1'

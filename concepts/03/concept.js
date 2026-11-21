@@ -1,5 +1,7 @@
 /* 03 Editorial - big video, very little copy. Main screen carries BPM / length;
-   the gallery is a full-bleed video wall, 12 per page, 4x3 or 3x4. */
+   the gallery is a full-bleed video wall, 12 per page, 4 rows by 3 columns.
+   Setup, gallery, and the personal video are separate screens with no links
+   between them. */
 DP.register({
   id: '03',
   fonts: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap',
@@ -7,28 +9,15 @@ DP.register({
   revealMs: 3600,
   turn: { out: 520, 'in': 950 },
   perPage: 12,
-  cols: 4,
+  cols: 3,
 
   heartSvg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 20.3s-6.4-4.1-8.9-7.8C1.3 9.7 1.8 6.5 4.3 5.1c2.1-1.2 4.4-.6 6.5 1.8l1.2 1.4 1.2-1.4c2.1-2.4 4.4-3 6.5-1.8 2.5 1.4 3 4.6 1.1 7.4-2.5 3.7-8.7 7.8-8.7 7.8z"/></svg>',
 
   voteIdleMs: 60000,
 
-  nav: function (DP) {
-    var here = DP.params.s;
-    var item = function (id, label) {
-      if (id === here) return '<b class="nav__here" aria-current="page">' + label + '</b>';
-      return '<button type="button" data-act="goto" data-screen="' + id + '">' + label + '</button>';
-    };
-    return '<nav class="nav">' +
-      '<button type="button" class="nav__back" data-nav="back" aria-label="Back">&larr;</button>' +
-      item('setup', 'Setup') + item('gallery', 'Gallery') +
-      (here === 'gallery' ? '<button type="button" class="nav__reset" data-reset-votes>Reset votes</button>' : '') +
-      '</nav>';
-  },
-
   setup: function (DP) {
     var d = DP.data;
-    return this.nav(DP) + '<div class="body">' + '<div class="strips">' + DP.each(d.dances, function (x) {
+    return '<div class="body">' + '<div class="strips">' + DP.each(d.dances, function (x) {
         return '<button class="strip" data-act="dance" data-id="' + x.id + '">' + DP.danceSlot(x) +
           '<span class="strip__cap"><i>' + x.no + ' / ' + DP.pad(d.dances.length) + '</i><b>' + x.title + '</b>' +
           '<em class="strip__meta"><span>' + x.bpm + ' BPM</span><span>' + x.len + '</span><span>' + x.mood + '</span></em></span></button>';
@@ -93,13 +82,6 @@ DP.register({
 
   init: function (root, DP) {
     var self = this;
-    if (!this.navBound) {
-      this.navBound = true;
-      root.addEventListener('click', function (ev) {
-        var back = ev.target.closest && ev.target.closest('[data-nav="back"]');
-        if (back) history.back();
-      });
-    }
     if (DP.params.s === 'setup') {
       root.addEventListener('pointerdown', function (ev) {
         self.audioOn = true;
@@ -124,6 +106,11 @@ DP.register({
       this.paintHearts(root);
       this.bootFirebase(root);
       this.resultSound(root);
+      return;
+    }
+    if (DP.params.s === 'mine') {
+      this.resultSound(root);
+      this.paintQr(root);
       return;
     }
     if (DP.params.s !== 'gallery') return;
@@ -176,7 +163,7 @@ DP.register({
   },
 
   result: function (DP) {
-    return this.nav(DP) + '<div class="body"><div class="frame">' + DP.resultSlot() + '</div>' +
+    return '<div class="body"><div class="frame">' + DP.resultSlot() + '</div>' +
       '<button type="button" class="unmute" data-unmute>&#9835; Tap for sound</button>' +
       '<p class="gen">One moment</p>' +
       '<section class="col">' +
@@ -188,45 +175,55 @@ DP.register({
         '</dl>' +
         '<p class="likes rv" style="--d:2"><span class="heart heart--static" data-entry="' + DP.sel().entry + '">' +
           this.heartSvg + '<b>0</b></span><small>likes</small></p>' +
-        '<div class="links rv" style="--d:3">' +
-          '<button class="link" data-act="goto" data-screen="gallery">Gallery &rarr;</button>' +
-          '<button class="link" data-act="restart">Start over</button>' +
-        '</div>' +
-        '<div class="keep rv" style="--d:4">' + DP.qr() + '<p>Scan to keep it.<small>' + DP.t('url') + '</small></p></div>' +
       '</section></div>';
   },
 
-  /* Shown after "Create": the video takes a while to make, so the result is
-     picked up at a separate Result station. */
-  thanks: function (DP) {
-    return this.nav(DP) + '<div class="body">' +
-      '<section class="thx">' +
-        '<p class="thx__tag"><span class="brand-dot"></span>Submitted</p>' +
-        '<h1 class="thx__h">Thank you,<br><span class="thx__name">' + DP.t('name') + '</span></h1>' +
-        '<p class="thx__p">Your virtual idol is being created.<br>Come to the Result station in a few minutes to see your debut.</p>' +
+  /* The other monitor. One person's finished video and a QR that opens that
+     file. Nothing here leads to setup or the gallery. */
+  mine: function (DP) {
+    return '<div class="body"><div class="frame">' + DP.resultSlot() + '</div>' +
+      '<button type="button" class="unmute" data-unmute>&#9835; Tap for sound</button>' +
+      '<section class="col">' +
+        '<h1 class="name">' + DP.t('name') + '</h1>' +
         '<dl class="facts">' +
           '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
           '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
         '</dl>' +
-        '<button type="button" class="thx__home" data-act="restart">Back to home</button>' +
+        '<div class="keep"><span class="qr" data-qr role="img" aria-label="QR code to download this video"></span>' +
+          '<p>Scan to download your video.</p></div>' +
+      '</section></div>';
+  },
+
+  /* Shown after "Create" on the selection monitor. The generated video is
+     shown on a different screen, so this one only asks them to wait. */
+  thanks: function (DP) {
+    return '<div class="body">' +
+      '<section class="thx">' +
+        '<p class="thx__tag"><span class="brand-dot"></span>Submitted</p>' +
+        '<h1 class="thx__h">Thank you</h1>' +
+        '<p class="thx__name">' + DP.t('name') + '</p>' +
+        '<p class="thx__p">Please wait.</p>' +
+        '<dl class="facts">' +
+          '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
+          '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
+          '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
+        '</dl>' +
+        '<button type="button" class="thx__home" data-act="restart">Next person</button>' +
       '</section>' +
       '<div class="thx__frame">' + DP.sourceSlot() + '</div>' +
     '</div>';
   },
 
   gallery: function (DP) {
-    return this.nav(DP) + '<div class="body"><div class="wall" data-grid></div>' +
+    return '<div class="body"><div class="wall" data-grid></div>' +
       '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
       '<div class="wall__pager">' +
         '<span class="wall__layouts wall__sort">' +
           '<button type="button" data-sort="new" aria-pressed="true">Newest</button>' +
           '<button type="button" data-sort="liked" aria-pressed="false">Most liked</button>' +
         '</span>' +
-        '<span class="wall__layouts">' +
-          '<button type="button" data-layout="4x3" aria-pressed="true">4×3</button>' +
-          '<button type="button" data-layout="3x4" aria-pressed="false">3×4</button>' +
-        '</span>' +
+        '<button type="button" class="wall__reset" data-reset-votes>Reset votes</button>' +
         '<button data-act="page" data-dir="-1" aria-label="Previous page">&larr;</button>' +
         '<b>' + DP.t('page2') + ' / ' + DP.t('pages2') + '</b>' +
         '<button data-act="page" data-dir="1" aria-label="Next page">&rarr;</button></div>' +
@@ -280,21 +277,12 @@ DP.register({
     }, true);
   },
 
-  /* ---------- gallery layout ---------- */
+  /* ---------- gallery layout ----------
+     The wall is fixed at 4 rows by 3 columns. */
   applyLayout: function (root) {
-    var layout = '4x3';
-    try {
-      if (sessionStorage.getItem('dp-gallery-layout') === '3x4') layout = '3x4';
-    } catch (e) { /* ignore */ }
-    root.dataset.layout = layout;
     var mode = window.DP ? DP.getSort() : 'new';
     root.querySelectorAll('.wall__sort [data-sort]').forEach(function (btn) {
       var on = btn.dataset.sort === mode;
-      btn.classList.toggle('is-on', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    root.querySelectorAll('.wall__layouts [data-layout]').forEach(function (btn) {
-      var on = btn.dataset.layout === layout;
       btn.classList.toggle('is-on', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
@@ -324,12 +312,6 @@ DP.register({
     });
     root.addEventListener('click', function (ev) {
       if (root.dataset.screen !== 'gallery') return;
-      var layout = ev.target.closest && ev.target.closest('.wall__layouts [data-layout]');
-      if (layout) {
-        try { sessionStorage.setItem('dp-gallery-layout', layout.dataset.layout); } catch (e) { /* ignore */ }
-        self.applyLayout(root);
-        return;
-      }
       var rst = ev.target.closest && ev.target.closest('[data-reset-votes]');
       if (rst) { self.resetVotes(root, rst); return; }
       var sortBtn = ev.target.closest && ev.target.closest('.wall__sort [data-sort]');
@@ -337,17 +319,16 @@ DP.register({
       var vb = ev.target.closest && ev.target.closest('[data-vote-act]');
       if (vb) { self.voteAction(root, vb.dataset.voteAct); return; }
       var tile = ev.target.closest && ev.target.closest('.tile[data-entry]');
-      if (!tile) return;
-      if (self.voting) self.togglePick(root, tile.dataset.entry);
-      else DP.openEntry(tile.dataset.entry);
+      if (!tile || !self.voting) return;
+      self.togglePick(root, tile.dataset.entry);
     });
     root.addEventListener('pointerdown', function () { if (self.voting) self.armIdle(root); }, true);
   },
 
   /* ---------- votes ----------
-     Browse mode: a tap on a video opens that person's result page.
-     Vote mode ("Vote for your favorite idol"): taps pick or un-pick videos,
-     and Confirm adds one vote to each picked video. The screen is shared, so
+     Browsing does not open a video. Vote mode ("Vote for your favorite idol")
+     is the only time a tap does anything: it picks or un-picks videos, and
+     Confirm adds one vote to each picked video. The screen is shared, so
      nothing is remembered per person: a video is picked once per Confirm. Without Firebase the totals stay in this
      browser. With a config in shared/firebase-config.js the same Confirm also
      adds 1 per video in Firestore. */
@@ -509,6 +490,27 @@ DP.register({
         self.writeCounts();
       });
     });
+  },
+
+  /* Draws a scannable QR for this screen's video file. Loaded only here. */
+  paintQr: function (root) {
+    var vid = root.querySelector('.frame video');
+    var src = vid && vid.getAttribute('src');
+    var box = root.querySelector('[data-qr]');
+    if (!box || !src) return;
+    var url = new URL(src, location.href).href;
+    var draw = function () {
+      if (typeof qrcode !== 'function') return;
+      var qr = qrcode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      box.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    };
+    if (typeof qrcode === 'function') { draw(); return; }
+    var s = document.createElement('script');
+    s.src = 'shared/qrcode.js';
+    s.onload = draw;
+    document.head.appendChild(s);
   },
 
   loadScript: function (src) {
