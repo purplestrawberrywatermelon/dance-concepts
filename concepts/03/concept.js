@@ -203,7 +203,7 @@ DP.register({
         '<p class="thx__tag"><span class="brand-dot"></span>Submitted</p>' +
         '<h1 class="thx__h">Thank you</h1>' +
         '<p class="thx__name">' + DP.t('name') + '</p>' +
-        '<p class="thx__p">Please wait.</p>' +
+        '<p class="thx__p">Your virtual idol is being created.<br>Come to the Result station in a few minutes to see your debut.</p>' +
         '<dl class="facts">' +
           '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
