@@ -25,10 +25,10 @@
   }
 */
 window.DP_FIREBASE = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: ''
+  apiKey: "AIzaSyCD3lczIweM7KnW4jmpgjUHH32npsUTYOs",
+  authDomain: "neurips2026-f0b0b.firebaseapp.com",
+  projectId: "neurips2026-f0b0b",
+  storageBucket: "neurips2026-f0b0b.firebasestorage.app",
+  messagingSenderId: "510275620665",
+  appId: "1:510275620665:web:182e8c35d09c7a581322e8"
 };
