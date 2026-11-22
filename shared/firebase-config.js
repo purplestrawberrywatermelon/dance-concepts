@@ -30,5 +30,6 @@ window.DP_FIREBASE = {
   projectId: "neurips2026-f0b0b",
   storageBucket: "neurips2026-f0b0b.firebasestorage.app",
   messagingSenderId: "510275620665",
-  appId: "1:510275620665:web:182e8c35d09c7a581322e8"
+  appId: "1:510275620665:web:182e8c35d09c7a581322e8",
+  emulator: ''
 };
