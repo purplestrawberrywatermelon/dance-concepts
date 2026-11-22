@@ -99,6 +99,13 @@
   transition: filter .4s ease, transform 1.2s var(--ease);
 }
 
+/* Fill the whole strip. A clip with a different aspect ratio is cropped at
+   the sides instead of leaving empty bands above and below. */
+.strip .slot > video {
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
 .strip .slot__tag {
   top: 60px;
   bottom: auto;
