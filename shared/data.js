@@ -16,9 +16,9 @@ window.DP_DATA = {
   },
 
   dances: [
-    { id: 'd1', no: '01', title: 'Neon Pulse',  short: 'Pulse',  mood: 'Sharp, high energy', bpm: 128, len: '0:18', src: 'ref/dance1/input_video.mp4', example: 'ref/dance1/output3.mp4' },
-    { id: 'd2', no: '02', title: 'Velvet Step', short: 'Velvet', mood: 'Smooth and groovy',  bpm: 102, len: '0:21', src: 'ref/dance2/input_video.mp4', example: 'ref/dance2/output3.mp4' },
-    { id: 'd3', no: '03', title: 'Sky Bounce',  short: 'Bounce', mood: 'Bright and playful', bpm: 115, len: '0:14', src: 'ref/dance3/video.mp4', example: 'ref/dance3/video.mp4' }
+    { id: 'd1', no: '01', title: 'Stop stop it - Got7',  short: 'Stop it',  mood: 'Energetic and Playful', bpm: 178, len: '0:18', src: 'ref/dance1/input_video.mp4', example: 'ref/dance1/output3.mp4' },
+    { id: 'd2', no: '02', title: 'REDRED - CORTIS', short: 'RED', mood: 'Bold and Edgy',  bpm: 121, len: '0:21', src: 'ref/dance2/input_video.mp4', example: 'ref/dance2/output3.mp4' },
+    { id: 'd3', no: '03', title: 'NEON - A20 LITE',  short: 'NEON', mood: 'Futuristic and Intense', bpm: 115, len: '0:14', src: 'ref/dance3/video.mp4', example: 'ref/dance3/video.mp4' }
   ],
 
   hairs: [
