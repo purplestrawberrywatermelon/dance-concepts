@@ -1446,3 +1446,75 @@
 #stage[data-screen="mine"] .unmute {
   left: 435px;
 }
+
+/* ---------- sound switch (every screen) ---------- */
+.snd {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: rgba(11, 11, 12, .6);
+  color: #fff;
+  opacity: .55;
+  transition: opacity .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.snd:hover,
+.snd:focus-visible {
+  opacity: 1;
+  border-color: var(--pink);
+}
+
+.snd svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.snd__off,
+#stage[data-sound="off"] .snd__on {
+  display: none;
+}
+
+#stage[data-sound="off"] .snd__off {
+  display: block;
+}
+
+#stage[data-sound="off"] .snd {
+  opacity: 1;
+  border-color: var(--pink);
+  color: var(--pink);
+}
+
+/* The gallery has a thin staff bar along the top; the switch sits in its left corner. */
+#stage[data-screen="gallery"] .snd {
+  top: 0;
+  left: 0;
+  right: auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+#stage[data-screen="gallery"] .snd svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Sound is off for good: no "tap for sound" prompt. */
+#stage[data-sound="off"] .unmute {
+  display: none !important;
+}
