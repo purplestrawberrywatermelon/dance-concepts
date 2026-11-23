@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Concept screen</title>
+  <title>Create Your Virtual Idol</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="shared/stage.css" />
 </head>
 <body>
   <!--
     Concept 03, drawn on a fixed 1920x1080 stage.
-    screen.html?c=03&s=setup|gallery|mine
-    Selection, gallery, and the personal video are separate screens.
+      index.html                    selection, then thank you
+      index.html?s=gallery          gallery votes
+      index.html?s=mine             result station: search by ID or name, then that
+                                    person's video and download QR (&id=12345 opens directly)
+    The three screens are not linked. screen.html?c=03&s=... is the same screen.
   -->
   <main id="stage"></main>
   <script src="shared/data.js"></script>
