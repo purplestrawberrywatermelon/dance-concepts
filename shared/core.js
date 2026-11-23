@@ -438,6 +438,70 @@
     turn(n > S.page ? 1 : -1);
   }
 
+  /* ---------- sound switch ----------
+     A small speaker button on every screen. "Off" keeps every video muted, no
+     matter what the screen's own code asks for, and is remembered in this
+     browser (localStorage "dp-sound"), so it survives moving between screens. */
+  var soundOn = true;
+  try { soundOn = localStorage.getItem('dp-sound') !== 'off'; } catch (e) { /* ignore */ }
+  (function () {
+    var d = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'muted');
+    if (!d || !d.set) return;
+    Object.defineProperty(HTMLMediaElement.prototype, 'muted', {
+      configurable: true,
+      enumerable: d.enumerable,
+      get: d.get,
+      set: function (v) { d.set.call(this, soundOn ? v : true); }
+    });
+  })();
+
+  var ICON_ON = '<svg class="snd__on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/></svg>';
+  var ICON_OFF = '<svg class="snd__off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>';
+
+  function paintSound() {
+    root.dataset.sound = soundOn ? 'on' : 'off';
+    var b = root.querySelector('[data-sound-btn]');
+    if (b) {
+      var label = soundOn ? 'Sound on. Tap to turn it off' : 'Sound off. Tap to turn it on';
+      b.setAttribute('aria-label', label);
+      b.setAttribute('title', label);
+      b.setAttribute('aria-pressed', soundOn ? 'false' : 'true');
+    }
+  }
+
+  function addSoundButton() {
+    if (!root.querySelector('[data-sound-btn]')) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'snd';
+      b.setAttribute('data-sound-btn', '');
+      b.innerHTML = ICON_ON + ICON_OFF;
+      root.appendChild(b);
+    }
+    paintSound();
+    if (!soundOn) root.querySelectorAll('video').forEach(function (v) { v.muted = true; });
+  }
+
+  function toggleSound() {
+    soundOn = !soundOn;
+    try { localStorage.setItem('dp-sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
+    paintSound();
+    root.querySelectorAll('video').forEach(function (v) {
+      if (!soundOn) v.muted = true;
+    });
+    if (soundOn) {
+      /* Give the sound back to the main result video (not to a "being made" preview). */
+      var fv = root.querySelector('.frame video');
+      if (fv && root.dataset.look !== 'pending' && root.dataset.phase !== 'gen') {
+        fv.muted = false;
+        fv.volume = 1;
+        var pr = fv.play();
+        if (pr && pr.catch) pr.catch(function () { fv.muted = true; });
+      }
+    }
+  }
+  DP.soundOn = function () { return soundOn; };
+
   /* ---------- render ---------- */
   function render() {
     clearTimers();
@@ -445,6 +509,7 @@
     delete root.dataset.turn;
     root.innerHTML = concept[P.s](DP);
     if (P.s === 'gallery') fillGrid();
+    addSoundButton();
     apply();
     if (concept.init) concept.init(root, DP);
     if (P.s === 'setup' && S.step === 'name') later(focusName, 300);
@@ -493,6 +558,7 @@
   }
 
   root.addEventListener('click', function (ev) {
+    if (ev.target.closest('[data-sound-btn]')) { toggleSound(); return; }
     var el = ev.target.closest('[data-act]');
     if (!el || !root.contains(el) || el.disabled) return;
     act(el.dataset.act, el);
