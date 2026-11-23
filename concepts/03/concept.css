@@ -1422,3 +1422,26 @@
 #stage[data-look="pending"] .next {
   top: 520px;
 }
+
+/* ---------- result station: video box ----------
+   The box has the shape of the dance1 result video (544 x 960). Every other
+   video is fitted inside it without cropping, so the layout does not move
+   from one person to the next. The pair (box + details) is centred. */
+#stage[data-screen="mine"] {
+  --vid-h: 900px;
+  --vid-w: 510px;
+}
+
+#stage[data-screen="mine"] .frame {
+  left: 405px;
+  width: var(--vid-w);
+  height: var(--vid-h);
+}
+
+#stage[data-screen="mine"] .col {
+  left: 1015px;
+}
+
+#stage[data-screen="mine"] .unmute {
+  left: 435px;
+}
