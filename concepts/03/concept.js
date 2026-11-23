@@ -1,5 +1,5 @@
 /* 03 Editorial - big video, very little copy. Main screen carries BPM / length;
-   the gallery is a full-bleed video wall, 12 per page, 4 rows by 3 columns.
+   the gallery is a full-bleed video wall, 12 per page, 4 columns by 3 rows.
    Setup, gallery, and the personal video are separate screens with no links
    between them. */
 DP.register({
@@ -9,7 +9,7 @@ DP.register({
   revealMs: 3600,
   turn: { out: 520, 'in': 950 },
   perPage: 12,
-  cols: 3,
+  cols: 4,
 
   heartSvg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.1 20.3s-6.4-4.1-8.9-7.8C1.3 9.7 1.8 6.5 4.3 5.1c2.1-1.2 4.4-.6 6.5 1.8l1.2 1.4 1.2-1.4c2.1-2.4 4.4-3 6.5-1.8 2.5 1.4 3 4.6 1.1 7.4-2.5 3.7-8.7 7.8-8.7 7.8z"/></svg>',
 
@@ -297,7 +297,7 @@ DP.register({
   },
 
   /* ---------- gallery layout ----------
-     The wall is fixed at 4 rows by 3 columns. */
+     The wall is fixed at 4 columns by 3 rows. */
   applyLayout: function (root) {
     var mode = window.DP ? DP.getSort() : 'new';
     root.querySelectorAll('.wall__sort [data-sort]').forEach(function (btn) {
@@ -514,7 +514,7 @@ DP.register({
   /* Draws a scannable QR for this screen's video file. Loaded only here. */
   paintQr: function (root, link) {
     var vid = root.querySelector('.frame video');
-    var src = link || (vid && vid.getAttribute('src'));
+    var src = link != null ? link : (vid && vid.getAttribute('src'));
     var box = root.querySelector('[data-qr]');
     if (!box) return;
     if (!src) { box.innerHTML = ''; return; }
@@ -736,9 +736,17 @@ DP.register({
     });
   },
 
+  /* The video address of a row. The field is videoUrl; a few other spellings are
+     accepted. Spaces and quotes around the value are ignored. Only an https
+     address or a path on this site is used (not gs:// or javascript:). */
   videoOf: function (row, DP) {
-    var u = row && row.videoUrl;
-    if (typeof u === 'string' && /^(https?:\/\/|[A-Za-z0-9_][\w\/.\-]*$)/.test(u)) return u;
+    var u = '', keys = ['videoUrl', 'videoURL', 'video_url', 'video', 'url'], i;
+    for (i = 0; i < keys.length && !u; i++) if (row && typeof row[keys[i]] === 'string') u = row[keys[i]];
+    u = u.trim().replace(/^["'\u201c\u201d]+|["'\u201c\u201d]+$/g, '');
+    if (u) {
+      if (/^https?:\/\/\S+$/i.test(u) || /^[A-Za-z0-9_][^\s:]*$/.test(u)) return u;
+      if (window.console) console.warn('videoUrl is not usable (use an https address):', u);
+    }
     /* Trying the screens without a back end: use the dance's example clip. */
     var demo = new URLSearchParams(location.search).get('demo') === '1' || DP_STORE.mode === 'local';
     if (!demo) return '';
