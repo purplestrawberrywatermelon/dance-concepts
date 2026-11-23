@@ -109,8 +109,7 @@ DP.register({
       return;
     }
     if (DP.params.s === 'mine') {
-      this.resultSound(root);
-      this.paintQr(root);
+      this.askInit(root, DP);
       return;
     }
     if (DP.params.s !== 'gallery') return;
@@ -178,10 +177,22 @@ DP.register({
       '</section></div>';
   },
 
-  /* The other monitor. One person's finished video and a QR that opens that
-     file. Nothing here leads to setup or the gallery. */
+  /* The result monitor. A volunteer types an ID (or a name) in the search box;
+     below it the newest participants are listed. Picking one shows that
+     person's video and a QR that opens the file. Nothing here leads to setup
+     or the gallery. The look is kept in #stage[data-look] = ask | wait | found | pending. */
   mine: function (DP) {
-    return '<div class="body"><div class="frame">' + DP.resultSlot() + '</div>' +
+    return '<div class="body">' +
+      '<section class="ask">' +
+        '<p class="thx__tag"><span class="brand-dot"></span>Result station</p>' +
+        '<h1 class="ask__h">Find your video</h1>' +
+        '<input class="ask__q" data-q type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20" ' +
+          'placeholder="Type your ID or name" aria-label="Search by ID or name">' +
+        '<p class="ask__msg" role="status" data-msg></p>' +
+        '<p class="ask__head"><span data-head>Newest first</span><span data-count></span></p>' +
+        '<ul class="list" data-list></ul>' +
+      '</section>' +
+      '<div class="frame" data-frame>' + (this.legacyEntry() ? DP.resultSlot() : '') + '</div>' +
       '<button type="button" class="unmute" data-unmute>&#9835; Tap for sound</button>' +
       '<section class="col">' +
         '<h1 class="name">' + DP.t('name') + '</h1>' +
@@ -190,6 +201,8 @@ DP.register({
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
           '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
         '</dl>' +
+        '<p class="pend">Your video is still being made.<br>It will appear here when it is ready.</p>' +
+        '<button type="button" class="thx__home next" data-k="next">Back to search</button>' +
         '<div class="keep"><span class="qr" data-qr role="img" aria-label="QR code to download this video"></span>' +
           '<p>Scan to download your video.</p></div>' +
       '</section></div>';
@@ -263,6 +276,9 @@ DP.register({
      Any tap on the page turns the sound on. */
   resultSound: function (root) {
     var v = root.querySelector('.frame video');
+    if (root._sndH) root.removeEventListener('pointerdown', root._sndH, true);
+    root._sndH = null;
+    delete root.dataset.silent;
     if (!v) return;
     var sync = function () {
       if (v.muted || v.paused) root.dataset.silent = '1';
@@ -271,12 +287,13 @@ DP.register({
     ['playing', 'pause', 'volumechange'].forEach(function (ev) { v.addEventListener(ev, sync); });
     this.play(v, true);
     setTimeout(sync, 500);
-    root.addEventListener('pointerdown', function () {
+    root._sndH = function () {
       if (!root.dataset.silent) return;
       v.muted = false;
       v.volume = 1;
       v.play().catch(function () {});
-    }, true);
+    };
+    root.addEventListener('pointerdown', root._sndH, true);
   },
 
   /* ---------- gallery layout ----------
@@ -495,11 +512,12 @@ DP.register({
   },
 
   /* Draws a scannable QR for this screen's video file. Loaded only here. */
-  paintQr: function (root) {
+  paintQr: function (root, link) {
     var vid = root.querySelector('.frame video');
-    var src = vid && vid.getAttribute('src');
+    var src = link || (vid && vid.getAttribute('src'));
     var box = root.querySelector('[data-qr]');
-    if (!box || !src) return;
+    if (!box) return;
+    if (!src) { box.innerHTML = ''; return; }
     var url = new URL(src, location.href).href;
     var draw = function () {
       if (typeof qrcode !== 'function') return;
@@ -513,6 +531,271 @@ DP.register({
     s.src = 'shared/qrcode.js';
     s.onload = draw;
     document.head.appendChild(s);
+  },
+
+  /* ---------- result station: search -> video ----------
+     The list comes from DP_STORE.watch (newest 300 rows, live). Typing filters
+     it by ID or name. A full 5-digit ID that is not in the list (an old row)
+     is looked up with DP_STORE.get. A row shows its video from row.videoUrl.
+     A row without videoUrl yet is "pending": the screen asks the store again
+     every few seconds and switches over when it appears. */
+  legacyEntry: function () {
+    return !!new URLSearchParams(location.search).get('entry');
+  },
+
+  setLook: function (root, look) {
+    root.dataset.look = look;
+    this.armIdle(root);
+  },
+
+  armIdle: function (root) {
+    var self = this, look = root.dataset.look;
+    clearTimeout(this.idleT);
+    if (look === 'wait' || this.legacyEntry()) return;
+    var raw = new URLSearchParams(location.search).get('idle');
+    var sec = raw === null ? (look === 'ask' ? 60 : look === 'pending' ? 300 : 90) : Number(raw);
+    if (!(sec > 0)) return;
+    if (look === 'ask' && !this.q) return;
+    this.idleT = setTimeout(function () { self.toAsk(root); }, sec * 1000);
+  },
+
+  askInit: function (root, DP) {
+    var self = this;
+    this.q = '';
+    this.hi = -1;
+    this.token = 0;
+    this.rows = this.rows || null;
+    root.querySelectorAll('video').forEach(function (v) { v.muted = true; });
+    if (!root._askBound) {
+      root._askBound = true;
+      var box = root.querySelector('[data-q]');
+      box.addEventListener('input', function () {
+        self.q = box.value.trim();
+        self.hi = -1;
+        self.paintList(root);
+        self.armIdle(root);
+      });
+      box.addEventListener('keydown', function (ev) {
+        /* core.js treats Enter in a text box as "Create"; keep it out of here. */
+        ev.stopPropagation();
+        if (ev.key === 'Enter') self.submit(root);
+        else if (ev.key === 'ArrowDown') self.moveHi(root, 1);
+        else if (ev.key === 'ArrowUp') self.moveHi(root, -1);
+        else if (ev.key === 'Escape') { box.value = ''; self.q = ''; self.hi = -1; self.paintList(root); }
+        else return;
+        ev.preventDefault();
+      });
+      root.addEventListener('click', function (ev) {
+        var b = ev.target.closest && ev.target.closest('[data-k]');
+        if (b) { self.toAsk(root); return; }
+        var li = ev.target.closest && ev.target.closest('[data-id]');
+        if (li && root.dataset.look === 'ask') self.open(root, li.dataset.id);
+      });
+      root.addEventListener('pointerdown', function (ev) {
+        self.armIdle(root);
+        if (root.dataset.look === 'ask' && !(ev.target.closest && ev.target.closest('[data-id]'))) {
+          setTimeout(function () { box.focus(); }, 0);
+        }
+      }, true);
+      /* A key pressed while nothing is focused goes to the search box. */
+      document.addEventListener('keydown', function (ev) {
+        if (root.dataset.screen !== 'mine' || root.dataset.look !== 'ask') return;
+        if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.key.length !== 1) return;
+        if (document.activeElement !== box) box.focus();
+      });
+      setInterval(function () {
+        if (root.dataset.screen === 'mine' && root.dataset.look === 'ask') self.paintList(root);
+      }, 20000);
+    }
+    /* Old link: index.html?s=mine&entry=142 shows that gallery video at once. */
+    if (this.legacyEntry()) {
+      this.setLook(root, 'found');
+      this.resultSound(root);
+      this.paintQr(root);
+      return;
+    }
+    /* index.html?s=mine&id=12345 opens that ID straight away. */
+    var pre = DP.state.id;
+    this.clearPerson();
+    this.setLook(root, 'ask');
+    this.paintList(root);
+    this.focusBox(root);
+    if (this.unwatch) this.unwatch();
+    this.listErr = false;
+    this.unwatch = DP_STORE.watch(function (rows, err) {
+      if (err) { self.listErr = true; self.paintList(root); return; }
+      self.listErr = false;
+      self.rows = rows;
+      if (root.dataset.look === 'ask') self.paintList(root);
+    }, 300);
+    if (pre) this.open(root, pre);
+  },
+
+  focusBox: function (root) {
+    var box = root.querySelector('[data-q]');
+    if (!box) return;
+    box.value = this.q || '';
+    box.focus();
+  },
+
+  clearPerson: function () {
+    var S = window.DP.state;
+    S.id = ''; S.name = ''; S.dance = null; S.hair = null; S.outfit = null;
+  },
+
+  ago: function (ms) {
+    if (!ms) return '';
+    var m = Math.max(0, Math.floor((Date.now() - ms) / 60000));
+    if (m < 1) return 'just now';
+    if (m < 60) return m + ' min ago';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + ' hr ago';
+    var d = Math.floor(h / 24);
+    return d + (d === 1 ? ' day ago' : ' days ago');
+  },
+
+  matches: function () {
+    var q = (this.q || '').toLowerCase(), rows = this.rows || [];
+    if (!q) return rows;
+    return rows.filter(function (r) {
+      return r.id.indexOf(q) >= 0 || String(r.name || '').toLowerCase().indexOf(q) >= 0;
+    });
+  },
+
+  paintList: function (root) {
+    var DP = window.DP, self = this, list = root.querySelector('[data-list]');
+    if (!list) return;
+    var all = this.rows, hits = all ? this.matches() : [];
+    var msg = '';
+    if (this.listErr && !all) msg = 'Cannot load the list. You can still type a 5-digit ID.';
+    else if (all && !all.length) msg = 'No one has created a video yet.';
+    else if (all && !hits.length) msg = /^[1-9]\d{4}$/.test(this.q) ? 'Not in the recent list. Press Enter to look up this ID.' : 'No match.';
+    if (this.hi >= hits.length) this.hi = hits.length - 1;
+    list.innerHTML = hits.map(function (r, i) {
+      var d = DP.byId(DP.data.dances, r.dance);
+      var ready = !!(r.videoUrl) || r.status === 'done';
+      return '<li data-id="' + DP.esc(r.id) + '"' + (i === self.hi ? ' class="is-hi"' : '') + '>' +
+        '<b>' + DP.esc(r.name) + '</b>' +
+        '<span class="list__id">' + DP.esc(r.id) + '</span>' +
+        '<span class="list__dn">' + (d ? DP.esc(d.short) : '') + '</span>' +
+        '<span class="list__ago">created ' + self.ago(r.createdAt) + '</span>' +
+        '<i class="list__st' + (ready ? ' is-ready' : '') + '" title="' + (ready ? 'Video ready' : 'Being made') + '"></i>' +
+      '</li>';
+    }).join('');
+    var m = root.querySelector('[data-msg]');
+    m.textContent = msg;
+    m.classList.toggle('is-bad', false);
+    root.querySelector('[data-count]').textContent = all ? (this.q ? hits.length + ' of ' + all.length : all.length + ' total') : '';
+    var hi = list.querySelector('.is-hi');
+    if (hi && hi.scrollIntoView) hi.scrollIntoView({ block: 'nearest' });
+  },
+
+  moveHi: function (root, dir) {
+    var n = this.matches().length;
+    if (!n) return;
+    this.hi = Math.max(0, Math.min(n - 1, (this.hi < 0 ? (dir > 0 ? 0 : n - 1) : this.hi + dir)));
+    this.paintList(root);
+  },
+
+  say: function (root, text, bad) {
+    var m = root.querySelector('[data-msg]');
+    m.textContent = text;
+    m.classList.toggle('is-bad', !!bad);
+  },
+
+  submit: function (root) {
+    var q = this.q || '';
+    if (!q) return;
+    if (/^[1-9]\d{4}$/.test(q)) { this.open(root, q); return; }
+    var hits = this.matches();
+    if (!hits.length) return;
+    this.open(root, hits[this.hi >= 0 ? this.hi : 0].id);
+  },
+
+  /* Show one participant: from the live list if present, else look the ID up. */
+  open: function (root, id) {
+    var self = this, rows = this.rows || [], i, row = null;
+    if (DP_STORE.validId(id) !== id) return;
+    for (i = 0; i < rows.length; i++) if (rows[i].id === id) row = rows[i];
+    if (row) { this.show(root, id, row); return; }
+    var token = ++this.token;
+    this.setLook(root, 'wait');
+    this.say(root, 'Looking for ' + id + '…');
+    DP_STORE.get(id).then(function (r) {
+      if (token !== self.token) return;
+      if (!r) {
+        self.setLook(root, 'ask');
+        self.say(root, 'No one has the ID ' + id + '. Check the number and try again.', true);
+        return;
+      }
+      self.show(root, id, r);
+    }).catch(function () {
+      if (token !== self.token) return;
+      self.setLook(root, 'ask');
+      self.say(root, 'No connection. Please try again.', true);
+    });
+  },
+
+  videoOf: function (row, DP) {
+    var u = row && row.videoUrl;
+    if (typeof u === 'string' && /^(https?:\/\/|[A-Za-z0-9_][\w\/.\-]*$)/.test(u)) return u;
+    /* Trying the screens without a back end: use the dance's example clip. */
+    var demo = new URLSearchParams(location.search).get('demo') === '1' || DP_STORE.mode === 'local';
+    if (!demo) return '';
+    var d = DP.byId(DP.data.dances, row && row.dance);
+    return (d && d.example) || DP.data.participant.src;
+  },
+
+  show: function (root, id, row) {
+    var self = this, DP = window.DP, S = DP.state, D = DP.data;
+    clearInterval(this.pollT);
+    S.id = id;
+    S.name = String(row.name || '').slice(0, 14);
+    S.dance = DP.byId(D.dances, row.dance) ? row.dance : null;
+    S.hair = DP.byId(D.hairs, row.hair) ? row.hair : null;
+    S.outfit = DP.byId(D.outfits, row.outfit) ? row.outfit : null;
+    var url = this.videoOf(row, DP);
+    var frame = root.querySelector('[data-frame]');
+    var d = DP.byId(D.dances, S.dance);
+    if (url) {
+      frame.innerHTML = DP.slot({ label: 'Result video', sub: DP.esc(S.name), src: url, tone: 1 });
+      this.setLook(root, 'found');
+      DP.apply();
+      this.resultSound(root);
+      this.paintQr(root, url);
+      return;
+    }
+    /* Row exists, video not ready: show the chosen dance and keep asking. */
+    frame.innerHTML = DP.slot({ label: 'Dance video', sub: d ? DP.esc(d.title) : '', src: d ? d.src : '', tone: 0 });
+    frame.querySelectorAll('video').forEach(function (v) { v.muted = true; });
+    this.setLook(root, 'pending');
+    DP.apply();
+    this.resultSound(root);
+    delete root.dataset.silent;
+    this.paintQr(root, '');
+    this.pollT = setInterval(function () {
+      if (root.dataset.look !== 'pending') { clearInterval(self.pollT); return; }
+      DP_STORE.get(id).then(function (r) {
+        if (root.dataset.look === 'pending' && r && self.videoOf(r, DP)) self.show(root, id, r);
+      }).catch(function () { /* try again next time */ });
+    }, 5000);
+  },
+
+  toAsk: function (root) {
+    var DP = window.DP;
+    clearInterval(this.pollT);
+    this.token++;
+    this.q = '';
+    this.hi = -1;
+    root.querySelectorAll('.frame video').forEach(function (v) { v.pause(); });
+    var frame = root.querySelector('[data-frame]');
+    if (frame) frame.innerHTML = '';
+    this.resultSound(root);
+    this.clearPerson();
+    DP.apply();
+    this.setLook(root, 'ask');
+    this.paintList(root);
+    this.focusBox(root);
   },
 
   loadScript: function (src) {
