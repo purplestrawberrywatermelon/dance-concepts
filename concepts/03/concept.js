@@ -203,7 +203,8 @@ DP.register({
         '<p class="thx__tag"><span class="brand-dot"></span>Submitted</p>' +
         '<h1 class="thx__h">Thank you</h1>' +
         '<p class="thx__name">' + DP.t('name') + '</p>' +
-        '<p class="thx__p">Your virtual idol is being created.<br>Come to the Result station in a few minutes to see your debut.</p>' +
+        '<div class="thx__id"><span class="thx__idl">Your ID</span><span class="thx__idn">' + DP.t('id', '\u2013 \u2013 \u2013 \u2013 \u2013') + '</span></div>' +
+        '<p class="thx__p">Remember this ID.<br>You will need it at the other stations.</p>' +
         '<dl class="facts">' +
           '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
@@ -525,21 +526,13 @@ DP.register({
   },
 
   bootFirebase: function (root) {
-    if (this.fbStarted) return;
-    var cfg = window.DP_FIREBASE;
-    if (!cfg || !cfg.apiKey || !cfg.projectId) return;
+    if (this.fbStarted || DP_STORE.mode !== 'firebase') return;
     this.fbStarted = true;
     var self = this;
-    var base = 'https://www.gstatic.com/firebasejs/10.14.1/';
-    this.loadScript(base + 'firebase-app-compat.js').then(function () {
-      return self.loadScript(base + 'firebase-auth-compat.js');
-    }).then(function () {
-      return self.loadScript(base + 'firebase-firestore-compat.js');
-    }).then(function () {
-      if (!firebase.apps.length) firebase.initializeApp(cfg);
-      self.db = firebase.firestore();
+    /* shared/store.js loads the SDK once, signs in anonymously and hands back the database. */
+    DP_STORE.connect().then(function (c) {
+      self.db = c.db;
       self.watchVotes(root);
-      return firebase.auth().signInAnonymously();
     }).catch(function () { /* hearts stay visible; counts are not stored */ });
   }
 });
