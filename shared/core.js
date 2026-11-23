@@ -66,7 +66,7 @@
     for (var i = 0; i < D.gallery.length; i++) if (D.gallery[i].entry === id) viewEntry = D.gallery[i];
   })();
 
-  var S = { step: 'pick', dance: null, hair: null, outfit: null, name: '', phase: 'done', page: 0 };
+  var S = { step: 'pick', dance: null, hair: null, outfit: null, name: '', id: '', phase: 'done', page: 0 };
   var concept = null;
   var timers = [];
 
@@ -94,6 +94,10 @@
   DP.pad = pad;
   DP.byId = byId;
 
+  /* The 5-digit participant ID is issued by shared/store.js (Firestore, or a
+     local stand-in). This screen only shows it and carries it in the URL. */
+  function validId(v) { return window.DP_STORE ? DP_STORE.validId(v) : (/^[1-9]\d{4}$/.test(v || '') ? String(v) : ''); }
+
   /* ---------- selection ---------- */
   function sel() {
     var p = D.participant;
@@ -102,6 +106,7 @@
       hair: byId(D.hairs, S.hair),
       outfit: byId(D.outfits, S.outfit),
       name: S.name,
+      id: S.id,
       entry: viewEntry ? viewEntry.entry : p.entry,
       url: D.event.linkBase + (viewEntry ? viewEntry.entry : p.entry)
     };
@@ -114,6 +119,7 @@
     var pages = Math.ceil(D.gallery.length / PER_PAGE);
     switch (key) {
       case 'name': return s.name;
+      case 'id': return s.id;
       case 'entry': return s.entry;
       case 'url': return s.url;
       case 'page': return S.page + 1;
@@ -302,7 +308,7 @@
   function go(screen, extra) {
     var selNow = { dance: S.dance, hair: S.hair, outfit: S.outfit, name: S.name.trim() };
     if (embedded) {
-      window.parent.postMessage({ type: 'dp:go', c: P.c, screen: screen, sel: selNow, state: extra && extra.state }, '*');
+      window.parent.postMessage({ type: 'dp:go', c: P.c, screen: screen, sel: selNow, id: extra && extra.id, state: extra && extra.state }, '*');
       return;
     }
     var n = new URLSearchParams();
@@ -312,6 +318,7 @@
       Object.keys(selNow).forEach(function (k) { if (selNow[k]) n.set(k, selNow[k]); });
       if (screen === 'result' && extra && extra.state) n.set('state', extra.state);
     }
+    if (screen === 'thanks') { var tid = validId(extra && extra.id) || validId(S.id); if (tid) n.set('id', tid); }
     location.search = n.toString();
   }
   DP.go = go;
@@ -451,13 +458,30 @@
   }
   DP.render = render;
 
+  /* Create = issue the ID and save the row, then show the thank-you screen. */
+  var creating = false;
+  function createRow(btn) {
+    if (!S.name.trim() || !S.dance || !S.hair || !S.outfit || creating) return;
+    creating = true;
+    var html0 = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Creating\u2026'; }
+    DP_STORE.create({ name: S.name, dance: S.dance, hair: S.hair, outfit: S.outfit }).then(function (r) {
+      creating = false;
+      go('thanks', { id: r.id });
+    }).catch(function () {
+      creating = false;
+      if (btn) { btn.disabled = false; btn.textContent = 'No connection. Tap to try again'; }
+      later(function () { if (btn && !creating) btn.innerHTML = html0; }, 4000);
+    });
+  }
+
   function act(name, el) {
     var ds = el ? el.dataset : {};
     switch (name) {
       case 'dance': case 'hair': case 'outfit': choose(name, ds.id); break;
       case 'back': setStep(S.step === 'name' ? 'style' : 'pick'); break;
       case 'restart': if (P.s === 'setup') restart(); else go('setup'); break;
-      case 'create': if (S.name.trim()) go('thanks'); break;
+      case 'create': createRow(el || root.querySelector('[data-act="create"]')); break;
       case 'replay': playReveal(); break;
       case 'page': turn(Number(ds.dir) || 1); break;
       case 'goto': go(ds.screen); break;
@@ -533,6 +557,7 @@
       S.hair = pick(D.hairs, 'hair', base.hair);
       S.outfit = pick(D.outfits, 'outfit', base.outfit);
       S.name = (q.get('name') || base.name).slice(0, 14);
+      S.id = validId(q.get('id'));
       var pages = Math.ceil(D.gallery.length / PER_PAGE);
       S.page = Math.max(0, Math.min(pages - 1, (parseInt(q.get('page') || '1', 10) || 1) - 1));
     }
