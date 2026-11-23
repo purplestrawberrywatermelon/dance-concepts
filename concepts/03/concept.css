@@ -546,13 +546,13 @@
 }
 
 /* ================= gallery ================= */
-/* Full-bleed wall. 4Ãƒâ€”3 is 4 rows Ãƒâ€” 3 columns (640Ãƒâ€”270). */
+/* Full-bleed wall. 12 tiles per page: 4 columns x 3 rows (480px wide each). */
 .wall {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(3, 640px);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(4, 480px);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .tile {
@@ -570,11 +570,11 @@
 }
 
 /* Tiles on the screen edge grow inward, so their pink frame is not cut off.
-   3 columns Ãƒâ€” 4 rows. */
-.tile:nth-child(3n+1) { --ox: 0%; }
-.tile:nth-child(3n)   { --ox: 100%; }
-.tile:nth-child(-n+3) { --oy: 0%; }
-.tile:nth-child(n+10) { --oy: 100%; }
+   4 columns x 3 rows. */
+.tile:nth-child(4n+1) { --ox: 0%; }
+.tile:nth-child(4n)   { --ox: 100%; }
+.tile:nth-child(-n+4) { --oy: 0%; }
+.tile:nth-child(n+9)  { --oy: 100%; }
 
 /* Pink frame: shown on hover and on picked videos. A pseudo-element, because
    an inset shadow on the tile would sit under the video. */
@@ -784,7 +784,8 @@
 
 .vote {
   position: absolute;
-  left: 50%;
+  /* Centred in the gap between the hearts of the 2nd and 3rd tile on the bottom row. */
+  left: 1150px;
   bottom: 20px;
   z-index: 25;
   transform: translateX(-50%);
