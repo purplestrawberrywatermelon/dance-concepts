@@ -498,6 +498,8 @@
         var pr = fv.play();
         if (pr && pr.catch) pr.catch(function () { fv.muted = true; });
       }
+      /* Screens whose sound follows the pointer (setup, gallery) restore it themselves. */
+      if (concept && concept.soundBack) concept.soundBack(root, DP);
     }
   }
   DP.soundOn = function () { return soundOn; };
