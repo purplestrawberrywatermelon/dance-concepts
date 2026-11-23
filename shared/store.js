@@ -3,6 +3,9 @@
 
     DP_STORE.create({ name, dance, hair, outfit })  ->  Promise<{ id }>
     DP_STORE.get(id)                                ->  Promise<row | null>
+    DP_STORE.watch(cb, n)                           ->  unsubscribe()
+                                                        cb(rows) with the newest n rows, now and on
+                                                        every change; each row has id and createdAt (ms)
 
   Two back ends with the same API:
     firebase  shared/firebase-config.js is filled in (or ?emu=localhost for the
@@ -58,6 +61,14 @@
     };
   }
 
+  /* A row as the screens use it: id added, createdAt as milliseconds. */
+  function withId(id, d) {
+    var t = d.createdAt;
+    d.createdAt = t && t.toMillis ? t.toMillis() : Number(t) || 0;
+    d.id = id;
+    return d;
+  }
+
   /* ---------- Firebase ---------- */
   var connecting = null;
   function connect() {
@@ -106,6 +117,19 @@
       return connect().then(function (c) {
         return c.db.collection('participants').doc(id).get();
       }).then(function (snap) { return snap.exists ? snap.data() : null; });
+    },
+    watch: function (cb, n) {
+      var off = function () {}, dead = false;
+      connect().then(function (c) {
+        if (dead) return;
+        off = c.db.collection('participants').orderBy('createdAt', 'desc').limit(n)
+          .onSnapshot(function (snap) {
+            var rows = [];
+            snap.forEach(function (d) { rows.push(withId(d.id, d.data({ serverTimestamps: 'estimate' }))); });
+            cb(rows);
+          }, function (e) { cb(null, e); });
+      }).catch(function (e) { if (!dead) cb(null, e); });
+      return function () { dead = true; off(); };
     }
   };
 
@@ -122,7 +146,21 @@
       try { localStorage.setItem(LKEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
       return Promise.resolve({ id: id });
     },
-    get: function (id) { return Promise.resolve(lread()[id] || null); }
+    get: function (id) { return Promise.resolve(lread()[id] || null); },
+    watch: function (cb, n) {
+      var last = '';
+      function tick() {
+        var all = lread(), key = JSON.stringify(all);
+        if (key === last) return;
+        last = key;
+        var rows = Object.keys(all).map(function (id) { return withId(id, Object.assign({}, all[id])); });
+        rows.sort(function (a, b) { return b.createdAt - a.createdAt; });
+        cb(rows.slice(0, n));
+      }
+      tick();
+      var t = setInterval(tick, 2000);
+      return function () { clearInterval(t); };
+    }
   };
 
   var be = live ? fb : local;
@@ -132,6 +170,7 @@
     validId: validId,
     connect: connect,
     create: function (sel) { return withTimeout(be.create(sel), 'create'); },
-    get: function (id) { return withTimeout(be.get(id), 'get'); }
+    get: function (id) { return withTimeout(be.get(id), 'get'); },
+    watch: function (cb, n) { return be.watch(cb, n || 300); }
   };
 })();
