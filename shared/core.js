@@ -25,7 +25,11 @@
 
   URL: index.html                         selection, then ?s=thanks
        index.html?s=gallery               vote on other videos
-       index.html?s=mine&entry=142        that person's video and download QR
+       index.html?s=mine                  result station: search by ID or name, then
+                                          that person's video and download QR
+                                          (&id=12345 opens directly, &demo=1 uses the
+                                          example clip when the row has no videoUrl,
+                                          &idle=N seconds before returning to search)
        These three screens are not linked. screen.html?c=03&s=... is the same.
        &step=pick|style|name  &state=gen|reveal|done  &page=2
        &dance=d2&hair=h1&outfit=o1&name=Junho
