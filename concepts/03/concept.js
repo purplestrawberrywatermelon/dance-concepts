@@ -68,6 +68,27 @@ DP.register({
     } catch (e) { /* ignore */ }
   },
 
+  /* The sound switch was turned back on: give the sound back to the video the
+     visitor is on (the dance under the pointer, the hovered gallery tile, or
+     the example clip while styling), which would otherwise stay muted until
+     the pointer left and came back. */
+  soundBack: function (root, DP) {
+    this.audioOn = true;
+    var s = DP.params.s, v;
+    if (s === 'setup') {
+      if (DP.state.step === 'pick') {
+        v = root.querySelector('.strip:hover video');
+        if (v) this.hear(root, v);
+      } else {
+        v = root.querySelector('.exbg video');
+        if (v) this.play(v, true);
+      }
+    } else if (s === 'gallery') {
+      var t = this.hotTile && root.contains(this.hotTile) ? this.hotTile : root.querySelector('.tile:hover');
+      if (t) this.hearTile(root, t);
+    }
+  },
+
   hear: function (root, vid) {
     root.querySelectorAll('.strip video').forEach(function (v) { if (v !== vid) v.muted = true; });
     if (vid) this.play(vid, true);
