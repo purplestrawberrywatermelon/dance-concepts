@@ -86,6 +86,9 @@ DP.register({
     } else if (s === 'gallery') {
       var t = this.hotTile && root.contains(this.hotTile) ? this.hotTile : root.querySelector('.tile:hover');
       if (t) this.hearTile(root, t);
+    } else if (s === 'thanks') {
+      v = root.querySelector('.thx__frame video');
+      if (v) this.play(v, true);
     }
   },
 
@@ -103,6 +106,11 @@ DP.register({
 
   init: function (root, DP) {
     var self = this;
+    if (DP.params.s === 'thanks') {
+      if (DP.setSound) DP.setSound(false);
+      root.querySelectorAll('video').forEach(function (v) { v.muted = true; });
+      return;
+    }
     if (DP.params.s === 'setup') {
       root.addEventListener('pointerdown', function (ev) {
         self.audioOn = true;
@@ -175,7 +183,12 @@ DP.register({
     var exv = root.querySelector('.exbg video');
     if (styling) {
       root.querySelectorAll('.strip video').forEach(function (v) { v.muted = true; });
-      if (exv && !this.inStyle) { exv.currentTime = 0; this.play(exv, this.audioOn); }
+      if (exv && !this.inStyle) {
+        exv.currentTime = 0;
+        this.audioOn = false;
+        if (DP.setSound) DP.setSound(false);
+        this.play(exv, false);
+      }
     } else if (exv) {
       exv.muted = true;
     }
@@ -216,16 +229,16 @@ DP.register({
       '<div class="frame" data-frame>' + (this.legacyEntry() ? DP.resultSlot() : '') + '</div>' +
       '<button type="button" class="unmute" data-unmute>&#9835; Tap for sound</button>' +
       '<section class="col">' +
+        '<p class="pend">Your video is still being made.<br>It will appear here when it is ready.</p>' +
         '<h1 class="name">' + DP.t('name') + '</h1>' +
         '<dl class="facts">' +
           '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
           '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
         '</dl>' +
-        '<p class="pend">Your video is still being made.<br>It will appear here when it is ready.</p>' +
-        '<button type="button" class="thx__home next" data-k="next">Back to search</button>' +
         '<div class="keep"><span class="qr" data-qr role="img" aria-label="QR code to download this video"></span>' +
           '<p>Scan to download your video.</p></div>' +
+        '<button type="button" class="thx__home next" data-k="next">Back to search</button>' +
       '</section></div>';
   },
 

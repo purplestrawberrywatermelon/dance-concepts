@@ -442,8 +442,8 @@
      A small speaker button on every screen. "Off" keeps every video muted, no
      matter what the screen's own code asks for, and is remembered in this
      browser (localStorage "dp-sound"), so it survives moving between screens. */
-  var soundOn = true;
-  try { soundOn = localStorage.getItem('dp-sound') !== 'off'; } catch (e) { /* ignore */ }
+  var soundOn = false;
+  try { soundOn = localStorage.getItem('dp-sound') === 'on'; } catch (e) { /* ignore */ }
   (function () {
     var d = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'muted');
     if (!d || !d.set) return;
@@ -502,7 +502,14 @@
       if (concept && concept.soundBack) concept.soundBack(root, DP);
     }
   }
+  function setSound(on) {
+    soundOn = !!on;
+    try { localStorage.setItem('dp-sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
+    paintSound();
+    if (!soundOn) root.querySelectorAll('video').forEach(function (v) { v.muted = true; });
+  }
   DP.soundOn = function () { return soundOn; };
+  DP.setSound = setSound;
 
   /* ---------- render ---------- */
   function render() {
