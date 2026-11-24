@@ -412,10 +412,11 @@
     if (grid) grid.innerHTML = tilesHTML(S.page);
   }
 
-  function turn(dir) {
+  /* turn(1) / turn(-1): one page, wrapping round. turn(dir, n): straight to page index n. */
+  function turn(dir, to) {
     var pages = Math.ceil(D.gallery.length / PER_PAGE);
     if (turning || pages < 2) return;
-    var next = (S.page + dir + pages) % pages;
+    var next = to != null ? to : (S.page + dir + pages) % pages;
     var t = concept.turn || { out: 400, 'in': 600 };
     if (P.isStatic) { S.page = next; fillGrid(); apply(); return; }
     turning = true;
@@ -435,8 +436,10 @@
     var pages = Math.ceil(D.gallery.length / PER_PAGE);
     n = Math.max(0, Math.min(pages - 1, n));
     if (n === S.page) return;
-    turn(n > S.page ? 1 : -1);
+    turn(n > S.page ? 1 : -1, n);
   }
+  DP.setPage = setPage;
+  DP.pages = function () { return Math.ceil(D.gallery.length / PER_PAGE); };
 
   /* ---------- sound switch ----------
      A small speaker button on every screen. "Off" keeps every video muted, no
