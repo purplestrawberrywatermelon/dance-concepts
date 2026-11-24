@@ -229,13 +229,13 @@ DP.register({
       '<div class="frame" data-frame>' + (this.legacyEntry() ? DP.resultSlot() : '') + '</div>' +
       '<button type="button" class="unmute" data-unmute>&#9835; Tap for sound</button>' +
       '<section class="col">' +
-        '<p class="pend">Your video is still being made.<br>It will appear here when it is ready.</p>' +
         '<h1 class="name">' + DP.t('name') + '</h1>' +
         '<dl class="facts">' +
           '<div><dt>Dance</dt><dd>' + DP.t('dance.title') + '</dd></div>' +
           '<div><dt>Hair</dt><dd>' + DP.t('hair.title') + '</dd></div>' +
           '<div><dt>Outfit</dt><dd>' + DP.t('outfit.title') + '</dd></div>' +
         '</dl>' +
+        '<p class="pend">Your video is still being made.<br>It will appear here when it is ready.</p>' +
         '<div class="keep"><span class="qr" data-qr role="img" aria-label="QR code to download this video"></span>' +
           '<p>Scan to download your video.</p></div>' +
         '<button type="button" class="thx__home next" data-k="next">Back to search</button>' +
