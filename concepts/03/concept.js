@@ -160,6 +160,7 @@ DP.register({
       return;
     }
     if (DP.params.s === 'gallery') {
+      this.stageTiles(root);
       this.applyLayout(root);
       this.paintHearts(root);
       this.paintVote(root);
@@ -289,10 +290,49 @@ DP.register({
 
   /* Full-bleed video tile; the name sits in a lower-third, the heart at the bottom right. */
   tile: function (e, i, DP) {
-    return DP.entrySlot(e) +
+    /* data-src, not src: stageTiles() starts the videos a few at a time. */
+    return DP.entrySlot(e).replace('<video src="', '<video data-src="') +
       '<span class="g-lt">' + (e.latest ? '<i>New</i>' : '') + '<b>' + DP.esc(e.name) + '</b><em>' + e.dance.title + '</em></span>' +
       '<span class="heart" data-entry="' + e.entry + '" aria-label="Likes">' + this.heartSvg + '<b>0</b></span>' +
       '<span class="pick" aria-hidden="true"></span>';
+  },
+
+  /* Loading the wall. Twelve videos started at once share one link, so every tile stays empty
+     until they have all downloaded a lot. Start WINDOW of them at a time instead: a tile shows
+     its first picture as soon as it has one, and the next one starts then. Tiles still waiting
+     show a soft shimmer. A tile that takes longer than SLOW ms stops holding up the others. */
+  WINDOW: 4,
+  SLOW: 6000,
+  stageTiles: function (root) {
+    var self = this, queue = [], active = 0;
+    root.querySelectorAll('.tile video[data-src]').forEach(function (v) {
+      if (v.getAttribute('src') || v.dataset.staged) return;   /* update() runs again and again */
+      v.dataset.staged = '1';
+      var tile = v.closest('.tile');
+      if (tile) tile.classList.add('is-loading');
+      queue.push(v);
+    });
+    function begin(v) {
+      var freed = false, timer;
+      function free() { if (freed) return; freed = true; active--; clearTimeout(timer); pump(); }
+      function shown() {
+        var tile = v.closest('.tile');
+        if (tile) tile.classList.remove('is-loading');
+        free();
+      }
+      active++;
+      v.addEventListener('loadeddata', shown, { once: true });
+      v.addEventListener('error', shown, { once: true });
+      timer = setTimeout(free, self.SLOW);
+      v.src = v.getAttribute('data-src');
+    }
+    function pump() {
+      while (active < self.WINDOW && queue.length) {
+        var v = queue.shift();
+        if (root.contains(v)) begin(v);          /* the page may have changed while it waited */
+      }
+    }
+    pump();
   },
 
   likes: function (id) {
