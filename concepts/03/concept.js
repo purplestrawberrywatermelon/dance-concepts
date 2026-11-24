@@ -161,6 +161,7 @@ DP.register({
     }
     if (DP.params.s === 'gallery') {
       this.stageTiles(root);
+      this.syncPageBox(root, DP);
       this.applyLayout(root);
       this.paintHearts(root);
       this.paintVote(root);
@@ -275,7 +276,8 @@ DP.register({
           '<button type="button" data-sort="liked" aria-pressed="false">Most liked</button>' +
         '</span>' +
         '<button data-act="page" data-dir="-1" aria-label="Previous page">&larr;</button>' +
-        '<b>' + DP.t('page2') + ' / ' + DP.t('pages2') + '</b>' +
+        '<b class="pg"><input class="pg__in" data-page-in type="text" inputmode="numeric" autocomplete="off" maxlength="3" ' +
+          'title="Type a page number" aria-label="Go to page" value="' + this.pad2(DP.state.page + 1) + '"> / ' + DP.t('pages2') + '</b>' +
         '<button data-act="page" data-dir="1" aria-label="Next page">&rarr;</button></div>' +
       '<div class="vote">' +
         '<button type="button" class="vote__start" data-vote-act="start">' + this.heartSvg + 'Vote for your favorite idol</button>' +
@@ -286,6 +288,25 @@ DP.register({
         '</div>' +
         '<p class="vote__thanks" role="status">Thanks! Your votes are in.</p>' +
       '</div></div>';
+  },
+
+  pad2: function (n) { return (n < 10 ? '0' : '') + n; },
+
+  /* The page number in the pager is a box: type 1, 01, 5 ... and press Enter to go straight there.
+     A number past the end goes to the last page; anything else puts the current number back. */
+  syncPageBox: function (root, DP) {
+    var box = root.querySelector('[data-page-in]');
+    if (box && box !== document.activeElement) box.value = this.pad2(DP.state.page + 1);
+  },
+  jumpPage: function (root, DP, box) {
+    var n = parseInt(String(box.value).replace(/\D/g, ''), 10), self = this;
+    if (!isNaN(n)) {
+      n = Math.max(1, Math.min(DP.pages(), n));
+      box.value = this.pad2(n);
+      DP.setPage(n - 1);
+    }
+    /* once the page has turned (or if it did not), show the real page number again */
+    setTimeout(function () { self.syncPageBox(root, DP); }, 1600);
   },
 
   /* Full-bleed video tile; the name sits in a lower-third, the heart at the bottom right. */
@@ -383,6 +404,21 @@ DP.register({
 
   bindGallery: function (root, DP) {
     var self = this;
+    root.addEventListener('focusin', function (ev) {
+      if (ev.target.matches && ev.target.matches('[data-page-in]')) ev.target.select();
+    });
+    root.addEventListener('input', function (ev) {
+      if (ev.target.matches && ev.target.matches('[data-page-in]')) ev.target.value = ev.target.value.replace(/\D/g, '');
+    });
+    root.addEventListener('change', function (ev) {
+      if (ev.target.matches && ev.target.matches('[data-page-in]')) self.jumpPage(root, DP, ev.target);
+    });
+    root.addEventListener('keydown', function (ev) {
+      if (!ev.target.matches || !ev.target.matches('[data-page-in]')) return;
+      ev.stopPropagation();                       /* core treats Enter in a field as "create" */
+      if (ev.key === 'Enter') { self.jumpPage(root, DP, ev.target); ev.target.blur(); }
+      else if (ev.key === 'Escape') { ev.target.value = self.pad2(DP.state.page + 1); ev.target.blur(); }
+    });
     root.addEventListener('pointerdown', function () {
       self.audioOn = true;
       if (root.dataset.screen === 'gallery' && self.hotTile) self.hearTile(root, self.hotTile);
