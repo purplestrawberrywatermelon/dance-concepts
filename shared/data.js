@@ -62,3 +62,22 @@ window.DP_DATA = {
     { entry: 121, name: 'Leila',   dance: 'd1', hair: 'h1', outfit: 'o1', ago: '1 hr',   src: 'ref/dance1/output2.mp4' }
   ]
 };
+
+/* Load test: open the gallery with &n=100 and it has 100 entries (the same clips and names, repeated).
+   Each extra entry gets its own address (?v=N after the file name), so the browser downloads every
+   tile for real instead of reusing one cached file, like a gallery of different videos would. */
+(function () {
+  var n = parseInt(new URLSearchParams(location.search).get('n'), 10);
+  var g = window.DP_DATA.gallery;
+  if (!(n > g.length)) return;
+  n = Math.min(n, 500);
+  var base = g.slice(), i, b, mins;
+  for (i = g.length; i < n; i++) {
+    b = base[i % base.length];
+    mins = 56 + (i - 18) * 3;
+    g.push({
+      entry: 142 - i, name: b.name, dance: b.dance, hair: b.hair, outfit: b.outfit,
+      ago: mins < 60 ? mins + ' min' : Math.floor(mins / 60) + ' hr', src: b.src + '?v=' + i
+    });
+  }
+})();
