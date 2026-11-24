@@ -596,6 +596,53 @@
   display: none;
 }
 
+/* A tile whose video has not shown its first picture yet. */
+.tile.is-loading .slot {
+  background: linear-gradient(100deg, #1b1b1f 30%, #2a2a31 50%, #1b1b1f 70%);
+  background-size: 200% 100%;
+  animation: tile-shimmer 1.3s linear infinite;
+}
+
+@keyframes tile-shimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: -100% 0; }
+}
+
+/* "Loading" label with a small spinner, centred in the waiting tile. */
+.tile.is-loading .slot::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -46px 0 0 -17px;
+  border: 3px solid rgba(255, 255, 255, .16);
+  border-top-color: var(--pink);
+  border-radius: 50%;
+  animation: tile-spin .9s linear infinite;
+  z-index: 2;
+}
+
+.tile.is-loading .slot::after {
+  content: "Loading\2026";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin-top: 6px;
+  text-align: center;
+  font: 600 15px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .62);
+  z-index: 2;
+}
+
+@keyframes tile-spin {
+  to { transform: rotate(360deg); }
+}
+
 .tile.is-empty {
   cursor: default;
   background: #111;
