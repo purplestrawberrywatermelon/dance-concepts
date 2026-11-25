@@ -260,7 +260,7 @@
 .head {
   position: absolute;
   left: 80px;
-  top: 70px;
+  top: 120px;
 }
 
 .head__title {
@@ -278,8 +278,24 @@
 
 .backbtn {
   position: absolute;
-  right: 80px;
-  top: 60px;
+  left: 80px;
+  top: 40px;
+  height: 56px;
+  padding: 0 28px;
+  border: 2px solid rgba(255, 255, 255, .55);
+  border-radius: 999px;
+  background: rgba(11, 11, 12, .6);
+  color: #fff;
+  font: 600 26px Inter, sans-serif;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  transition: opacity .3s ease, background .2s ease, border-color .2s ease;
+}
+
+.backbtn:hover {
+  background: var(--pink);
+  border-color: var(--pink);
+  color: #0b0b0c;
 }
 
 .tray {
