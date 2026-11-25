@@ -120,7 +120,7 @@
 
   function lookup(key) {
     var s = sel();
-    var pages = Math.ceil(D.gallery.length / PER_PAGE);
+    var pages = pageCount();
     switch (key) {
       case 'name': return s.name;
       case 'id': return s.id;
@@ -263,7 +263,7 @@
     if (!embedded) return;
     window.parent.postMessage({
       type: 'dp:state', c: P.c, s: P.s, step: S.step, phase: S.phase,
-      page: S.page + 1, pages: Math.ceil(D.gallery.length / PER_PAGE),
+      page: S.page + 1, pages: pageCount(),
       sel: { dance: S.dance, hair: S.hair, outfit: S.outfit, name: S.name }
     }, '*');
   }
@@ -361,6 +361,109 @@
   /* ---------- gallery ---------- */
   var turning = false;
 
+  function pageCount() { return Math.max(1, Math.ceil(D.gallery.length / PER_PAGE)); }
+
+  /* ---------- live gallery ----------
+     With Firebase on, the wall is not the example list in data.js but the
+     participants whose video is ready (videoUrl set), newest first, and it
+     follows the database: a new finished video appears by itself, no reload.
+       ?live=0   keep the example list (no Firebase)
+       ?n=100    after the real videos, fill up to 100 with example clips (load test)
+       ?demo=1   after the real videos, add all the example clips
+     Only the first 300 rows are watched (what the Firestore rules allow). */
+  var examples = null;     /* the data.js list, kept aside while the wall is live */
+  var liveRows = null;     /* null until the first snapshot arrives */
+  var liveHeld = null;     /* a snapshot that came in during a page turn */
+  var liveOn = false;
+
+  function liveWanted() {
+    return P.s === 'gallery' && !P.isStatic && q.get('live') !== '0' &&
+      !!window.DP_STORE && DP_STORE.mode === 'firebase';
+  }
+
+  function usableUrl(row) {
+    var keys = ['videoUrl', 'videoURL', 'video_url'], u = '', i;
+    for (i = 0; i < keys.length && !u; i++) if (row && typeof row[keys[i]] === 'string') u = row[keys[i]];
+    u = u.trim().replace(/^["'“”]+|["'“”]+$/g, '');
+    /* an https/http address, or a path on this site; never gs:// or javascript: */
+    return u && (/^https?:\/\/\S+$/i.test(u) || /^[A-Za-z0-9_][^\s:]*$/.test(u)) ? u : '';
+  }
+
+  function agoText(ms) {
+    if (!ms) return '';
+    var m = Math.max(0, Math.floor((Date.now() - ms) / 60000));
+    if (m < 1) return 'now';
+    if (m < 60) return m + ' min';
+    return Math.floor(m / 60) + ' hr';
+  }
+
+  function liveList() {
+    var out = [], i, r, u, extra = 0, want = parseInt(q.get('n') || '', 10);
+    for (i = 0; i < (liveRows || []).length; i++) {
+      r = liveRows[i];
+      u = usableUrl(r);
+      if (!u) continue;                                    /* not finished yet */
+      out.push({ entry: Number(r.id) || r.id, name: String(r.name || '').slice(0, 14),
+        dance: r.dance, hair: r.hair, outfit: r.outfit, ago: agoText(r.createdAt), src: u });
+    }
+    if (want > 0) extra = Math.max(0, Math.min(want, 500) - out.length);
+    else if (q.get('demo') === '1') extra = examples.length;
+    return out.concat(examples.slice(0, extra));
+  }
+
+  function keyOf(list) { return list.map(function (e) { return e.entry + '|' + e.src; }).join(','); }
+
+  /* Redraw the current page without restarting the videos that stay on it:
+     a tile already on the page is kept (and moved if its place changed). */
+  function patchGrid() {
+    var grid = root.querySelector('[data-grid]');
+    if (!grid) return;
+    var old = {}, i, el;
+    grid.querySelectorAll('.tile[data-entry]').forEach(function (t) { old[t.dataset.entry] = t; });
+    var fresh = document.createElement('div');
+    fresh.innerHTML = tilesHTML(S.page);
+    var next = Array.prototype.slice.call(fresh.children), keep = document.createDocumentFragment();
+    for (i = 0; i < next.length; i++) {
+      el = next[i];
+      var prev = el.dataset.entry ? old[el.dataset.entry] : null;
+      if (prev) {
+        var lt = prev.querySelector('.g-lt'), nlt = el.querySelector('.g-lt');
+        if (lt && nlt && lt.innerHTML !== nlt.innerHTML) lt.innerHTML = nlt.innerHTML;   /* the "New" mark moves on */
+        var cls = el.className.split(' ');
+        prev.classList.forEach(function (c) { if (c !== 'is-latest' && c !== 'is-empty' && cls.indexOf(c) < 0) cls.push(c); });
+        prev.className = cls.join(' ');          /* keeps is-loading, is-picked ... */
+        prev.setAttribute('style', el.getAttribute('style'));
+        el = prev;
+      }
+      keep.appendChild(el);
+    }
+    grid.innerHTML = '';
+    grid.appendChild(keep);
+  }
+
+  function liveApply(rows) {
+    if (turning) { liveHeld = rows; return; }
+    liveRows = rows;
+    var list = liveList();
+    if (keyOf(list) === keyOf(D.gallery)) return;          /* nothing changed: leave the wall alone */
+    D.gallery.length = 0;
+    Array.prototype.push.apply(D.gallery, list);
+    S.page = Math.max(0, Math.min(pageCount() - 1, S.page));
+    patchGrid();
+    root.dataset.wall = D.gallery.length ? 'full' : 'empty';
+    apply();
+  }
+
+  function startLive() {
+    if (liveOn || !liveWanted()) return;
+    liveOn = true;
+    DP_STORE.watch(function (rows, err) {
+      if (err) { if (window.console) console.warn('gallery: cannot read the participants list', err); return; }
+      liveApply(rows || []);
+    }, 300);
+  }
+  DP.live = function () { return liveOn; };
+
   /* 'new' = newest first (data order). 'liked' = most liked first, ties keep
      newest first. Likes come from concept.likes(entry). */
   var sortMode = 'new';
@@ -396,7 +499,7 @@
         inner = concept.tile({
           entry: e.entry, name: e.name, ago: e.ago, src: e.src,
           no: pad(page * PER_PAGE + i + 1),
-          dance: byId(D.dances, e.dance), hair: byId(D.hairs, e.hair), outfit: byId(D.outfits, e.outfit),
+          dance: byId(D.dances, e.dance) || { id: '', title: '' }, hair: byId(D.hairs, e.hair) || { id: '', title: '' }, outfit: byId(D.outfits, e.outfit) || { id: '', title: '' },
           latest: e === D.gallery[0]
         }, i, DP);
       } else if (concept.empty) {
@@ -414,7 +517,7 @@
 
   /* turn(1) / turn(-1): one page, wrapping round. turn(dir, n): straight to page index n. */
   function turn(dir, to) {
-    var pages = Math.ceil(D.gallery.length / PER_PAGE);
+    var pages = pageCount();
     if (turning || pages < 2) return;
     var next = to != null ? to : (S.page + dir + pages) % pages;
     var t = concept.turn || { out: 400, 'in': 600 };
@@ -427,19 +530,22 @@
       fillGrid();
       apply();
       root.dataset.turn = 'in';
-      later(function () { delete root.dataset.turn; turning = false; }, t['in']);
+      later(function () {
+        delete root.dataset.turn; turning = false;
+        if (liveHeld) { var r = liveHeld; liveHeld = null; liveApply(r); }
+      }, t['in']);
     }, t.out);
   }
   DP.turn = turn;
 
   function setPage(n) {
-    var pages = Math.ceil(D.gallery.length / PER_PAGE);
+    var pages = pageCount();
     n = Math.max(0, Math.min(pages - 1, n));
     if (n === S.page) return;
     turn(n > S.page ? 1 : -1, n);
   }
   DP.setPage = setPage;
-  DP.pages = function () { return Math.ceil(D.gallery.length / PER_PAGE); };
+  DP.pages = function () { return pageCount(); };
 
   /* ---------- sound switch ----------
      A small speaker button on every screen. "Off" keeps every video muted, no
@@ -520,7 +626,7 @@
     turning = false;
     delete root.dataset.turn;
     root.innerHTML = concept[P.s](DP);
-    if (P.s === 'gallery') fillGrid();
+    if (P.s === 'gallery') { fillGrid(); root.dataset.wall = D.gallery.length ? 'full' : 'empty'; }
     addSoundButton();
     apply();
     if (concept.init) concept.init(root, DP);
@@ -536,6 +642,7 @@
       root.dataset.turn = 'in';
       later(function () { delete root.dataset.turn; }, (concept.turn || { 'in': 600 })['in']);
     }
+    if (P.s === 'gallery') startLive();
   }
   DP.render = render;
 
@@ -640,13 +747,14 @@
       S.outfit = pick(D.outfits, 'outfit', base.outfit);
       S.name = (q.get('name') || base.name).slice(0, 14);
       S.id = validId(q.get('id'));
-      var pages = Math.ceil(D.gallery.length / PER_PAGE);
+      var pages = pageCount();
       S.page = Math.max(0, Math.min(pages - 1, (parseInt(q.get('page') || '1', 10) || 1) - 1));
     }
   }
 
   DP.register = function (def) {
     concept = def;
+    if (liveWanted()) { examples = D.gallery.slice(); D.gallery.length = 0; }
     PER_PAGE = def.perPage || 16;
     COLS = def.cols || 4;
     initState();
