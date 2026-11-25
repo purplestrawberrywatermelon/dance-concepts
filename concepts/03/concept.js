@@ -269,6 +269,7 @@ DP.register({
     return '<nav class="nav">' +
       '<button type="button" class="nav__reset" data-reset-votes>Reset votes</button>' +
       '</nav><div class="body"><div class="wall" data-grid></div>' +
+      '<p class="wall__empty">Videos will appear here<small>as soon as they are ready</small></p>' +
       '<p class="wall__brand"><span class="brand-dot"></span>The debut wall &mdash; ' + DP.t('total') + ' videos</p>' +
       '<div class="wall__pager">' +
         '<span class="wall__layouts wall__sort">' +
