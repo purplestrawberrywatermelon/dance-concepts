@@ -1598,3 +1598,30 @@
 #stage[data-sound="off"] .unmute {
   display: none !important;
 }
+
+
+/* Live gallery with no finished video yet. */
+.wall__empty {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  pointer-events: none;
+  font: 700 44px "Space Grotesk", sans-serif;
+  letter-spacing: .04em;
+  text-align: center;
+}
+
+.wall__empty small {
+  color: var(--muted);
+  font: 500 22px Inter, sans-serif;
+  letter-spacing: .06em;
+}
+
+#stage[data-wall="empty"] .wall__empty {
+  display: flex;
+}
