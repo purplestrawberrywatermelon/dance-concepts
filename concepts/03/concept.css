@@ -829,8 +829,7 @@
 
 .vote {
   position: absolute;
-  /* Centred in the gap between the hearts of the 2nd and 3rd tile on the bottom row. */
-  left: 1150px;
+  left: 50%;
   bottom: 20px;
   z-index: 25;
   transform: translateX(-50%);
